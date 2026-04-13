@@ -86,7 +86,7 @@ int iniciar_servidor(t_log* logger,char* puerto)
 	return socket_servidor;
 }
 
-int esperar_cliente(int socket_servidor)
+int esperar_cliente(int socket_servidor, t_log * logger)
 {
 	// Aceptamos un nuevo cliente
 	int socket_cliente;

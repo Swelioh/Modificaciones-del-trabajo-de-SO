@@ -26,7 +26,6 @@ void liberar_conexion(int socket_cliente);
 
 // Funciones para SERVIDOR
 int iniciar_servidor(t_log* logger, char* puerto);
-int esperar_cliente(int socket_cliente);
-
+int esperar_cliente(int socket_servidor, t_log * logger);
 
 #endif
