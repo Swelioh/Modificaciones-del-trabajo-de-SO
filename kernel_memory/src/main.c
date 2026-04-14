@@ -15,6 +15,7 @@ int main(int argc, char* argv[]) {
 
     //Liberar recursos TODO!!!
     liberar_conexion(socket_servidor);
+    log_destroy(logger);
 
     saludar("kernel_memory");
     return 0;

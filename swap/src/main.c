@@ -14,10 +14,9 @@ int main(int argc, char* argv[]) {
 
     // free(leido);
 
-    //Liberar recursos TODO!!!
+    //Liberar recursos TODO!!!liberar_conexion(conexion);
     liberar_conexion(conexion);
-
-
+    log_destroy(logger);
     saludar("swap");
     return 0;
 }
