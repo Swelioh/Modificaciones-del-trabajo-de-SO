@@ -1,5 +1,6 @@
 #include <utils/utils.h>
 
+
 void saludar(char* quien) {
     printf("Hola desde %s!!\n", quien);
 }
@@ -95,4 +96,11 @@ int esperar_cliente(int socket_servidor, t_log * logger)
 	log_info(logger, "Se conecto un cliente!");
 
 	return socket_cliente;
+}
+
+t_config* iniciar_config(void)
+{
+	t_config* nuevo_config = config_create("../cliente.config");
+
+	return nuevo_config;
 }
