@@ -21,9 +21,7 @@ void saludar(char* quien);
 // Funciones para CLIENTE
 
 int crear_conexion(char* ip, char* puerto);
-
 void liberar_conexion(int socket_cliente);
-
 
 // Funciones para SERVIDOR
 int iniciar_servidor(t_log* logger, char* puerto);
@@ -31,5 +29,6 @@ int esperar_cliente(int socket_servidor, t_log * logger);
 
 //Config
 t_config* iniciar_config(void);
+void get_string_from_config(t_log* logger, t_config* config, char* clave, char** valor);
 
 #endif

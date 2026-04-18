@@ -1,6 +1,5 @@
 #include <utils/utils.h>
 
-
 void saludar(char* quien) {
     printf("Hola desde %s!!\n", quien);
 }
@@ -48,8 +47,6 @@ void liberar_conexion(int socket_cliente)
 {
 	close(socket_cliente);
 }
-
-
 
 int iniciar_servidor(t_log* logger,char* puerto)
 {
@@ -103,4 +100,14 @@ t_config* iniciar_config(void)
 	t_config* nuevo_config = config_create("../cliente.config");
 
 	return nuevo_config;
+}
+
+void get_string_from_config(t_log* logger, t_config* config, char* clave, char** valor)
+{
+    if(config_has_property(config,clave)){
+        *valor = config_get_string_value(config, clave);
+    }else{
+        log_error(logger, "FALTA CLAVE: %s", clave);
+        exit(1);
+    }
 }
