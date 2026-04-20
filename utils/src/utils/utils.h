@@ -10,6 +10,7 @@
 #include<string.h>
 #include<commons/log.h>
 #include<commons/config.h>
+#include<commons/string.h>
 
 /**
 * @brief Imprime un saludo por consola
