@@ -108,6 +108,16 @@ void get_string_from_config(t_log* logger, t_config* config, char* clave, char**
         *valor = config_get_string_value(config, clave);
     }else{
         log_error(logger, "FALTA CLAVE: %s", clave);
-        exit(1);
+        exit(EXIT_FAILURE);
+    }
+}
+
+void get_int_from_config(t_log* logger, t_config* config, char* clave, int** valor)
+{
+    if(config_has_property(config,clave)){
+        *valor = config_get_int_value(config, clave);
+    }else{
+        log_error(logger, "FALTA CLAVE: %s", clave);
+        exit(EXIT_FAILURE);
     }
 }
