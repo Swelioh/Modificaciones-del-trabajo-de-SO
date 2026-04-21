@@ -9,5 +9,5 @@
 // *********************************************
 void validarArgumentos (int cantidadArgumentos);
 void inicializarModulo(char* pathConfig);
-void liberarModulo(t_log* logger,t_config* config);
+void liberarModulo(t_log* logger_a_destruir,t_config* config_a_destruir);
 #endif
