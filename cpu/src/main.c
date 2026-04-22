@@ -28,10 +28,10 @@ int main(int argc, char* argv[]) {
         log_error(logger, "No se pudo cargar el config: %s\n", argv[1]);
         return EXIT_FAILURE;
     }
-    get_string_from_config(logger, config, "IP", &ip);
-    get_string_from_config(logger, config, "PUERTO_KERNEL_SCHEDULER", &puerto_kernel_scheduler);
-    get_string_from_config(logger, config, "PUERTO_MEMORY_STICK", &puerto_memory_stick);
-    get_string_from_config(logger, config, "PUERTO_KERNEL_MEMORY", &puerto_kernel_memory);
+    get_string_from_config(config, "IP", &ip);
+    get_string_from_config(config, "PUERTO_KERNEL_SCHEDULER", &puerto_kernel_scheduler);
+    get_string_from_config(config, "PUERTO_MEMORY_STICK", &puerto_memory_stick);
+    get_string_from_config(config, "PUERTO_KERNEL_MEMORY", &puerto_kernel_memory);
 
     log_info(logger, "IP: %s", ip);
 	log_info(logger, "PUERTO_KERNEL_SCHEDULER: %s", puerto_kernel_scheduler);

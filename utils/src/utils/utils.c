@@ -79,7 +79,7 @@ int iniciar_servidor(t_log* logger,char* puerto)
 	// Escuchamos las conexiones entrantes
     
 	freeaddrinfo(servinfo);
-	log_trace(logger, "Listo para escuchar a mi cliente");
+	printf("Listo para escuchar a mi cliente");
 
 	return socket_servidor;
 }
@@ -90,7 +90,7 @@ int esperar_cliente(int socket_servidor, t_log * logger)
 	int socket_cliente;
 	socket_cliente = accept(socket_servidor, NULL, NULL);
 
-	log_info(logger, "Se conecto un cliente!");
+	printf("Se conecto un cliente!");
 
 	return socket_cliente;
 }
@@ -102,12 +102,22 @@ t_config* iniciar_config(void)
 	return nuevo_config;
 }
 
-void get_string_from_config(t_log* logger, t_config* config, char* clave, char** valor)
+void get_string_from_config(t_config* config, char* clave, char** valor)
 {
     if(config_has_property(config,clave)){
         *valor = config_get_string_value(config, clave);
     }else{
-        log_error(logger, "FALTA CLAVE: %s", clave);
-        exit(1);
+        printf("FALTA CLAVE: %s\n", clave);
+        exit(EXIT_FAILURE);
+    }
+}
+
+void get_int_from_config(t_config* config, char* clave, int* valor)
+{
+    if(config_has_property(config,clave)){
+        *valor = config_get_int_value(config, clave);
+    }else{
+        printf("FALTA CLAVE: %s\n", clave);
+        exit(EXIT_FAILURE);
     }
 }

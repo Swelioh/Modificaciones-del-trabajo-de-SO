@@ -1,36 +1,24 @@
-#include <utils/utils.h>
-
-void liberar_recursos(t_log* logger, int conexion_scheduler)
-{
-    liberar_conexion(conexion_scheduler);
-    log_destroy(logger);
-}
+#include <utils/inicializacion.h>
 
 int main(int argc, char* argv[]) {
-    char* puerto_kernel_memory;
+    //TODO hacer atexit(funcitions); para que se ejecuten cuando se usa exit(asdasd);
 
-    t_log* logger = log_create("kernel_memory.log", "kernel_memory", 1, LOG_LEVEL_TRACE);
+    validar_argumentos(argc);
 
+    inicializar_modulo(argv[1]);
+
+    log_info(logger, "PUERTO_KERNEL_MEMORY: %s", PUERTO_KERNEL_MEMORY);
     log_info(logger, "> Kernel Memory Listo");
-
-    // Archivos de Config
-    t_config* config = config_create(argv[1]);
-    if (config == NULL) {
-        log_error(logger, "No se pudo cargar el config: %s\n", argv[1]);
-        return EXIT_FAILURE;
-    }
-    get_string_from_config(logger, config, "PUERTO_KERNEL_MEMORY", &puerto_kernel_memory);
 	
-    log_info(logger, "PUERTO_KERNEL_MEMORY: %s", puerto_kernel_memory);
-    
-    int socket_servidor = iniciar_servidor(logger, puerto_kernel_memory);
+    int conexion_servidor = iniciar_servidor(logger, PUERTO_KERNEL_MEMORY);
 
-    esperar_cliente(socket_servidor, logger);
-    esperar_cliente(socket_servidor, logger);
-    esperar_cliente(socket_servidor, logger);
-    esperar_cliente(socket_servidor, logger);
+    esperar_cliente(conexion_servidor, logger);
+    esperar_cliente(conexion_servidor, logger);
+    esperar_cliente(conexion_servidor, logger);
+    esperar_cliente(conexion_servidor, logger);
 
-    liberar_recursos(logger, socket_servidor);
+    liberar_recursos(logger, config);
+    liberar_conexion(conexion_servidor);
 
     saludar("kernel_memory");
     return 0;
