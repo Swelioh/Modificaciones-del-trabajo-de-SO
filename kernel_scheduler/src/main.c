@@ -21,7 +21,6 @@ int main(int argc, char* argv[]) {
     // Esperamos a la CPU
     esperar_cliente(conexion_servidor, logger);
     
-
     //Liberar recursos TODO!!!
     liberar_conexion(conexion);
     liberar_conexion(conexion_servidor);
