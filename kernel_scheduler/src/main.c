@@ -47,6 +47,8 @@ int main(int argc, char* argv[]) {
     // Esperamos a la CPU
     esperar_cliente(conexion_scheduler, logger);
 
+    manejar_paquete(conexion);
+
     liberar_recursos(logger, config, conexion_scheduler, conexion_kernel_memory);
 
     saludar("kernel_scheduler");
