@@ -13,22 +13,23 @@ void inicializar_modulo(char* pathConfig){
     config = config_create(pathConfig);
 
     if (config == NULL) {
-        log_error(logger, "No se pudo cargar el config: %s\n", pathConfig);
+        printf("No se pudo cargar el config: %s\n", pathConfig);
         exit(EXIT_FAILURE);
     }
 
     //Leemos los valores y guardamos en las variables globales
-    get_string_from_config(logger, config, "LOG_LEVEL", &LOG_LEVEL);
-    get_int_from_config(logger, config, "SEGMENT_MAX_SIZE", &SEGMENT_MAX_SIZE);
-    get_string_from_config(logger, config, "ALLOCATION_STRATEGY", &ALLOCATION_STRATEGY);
-    get_int_from_config(logger, config, "INSTRUCTION_DELAY", &INSTRUCTION_DELAY);
-    get_int_from_config(logger, config, "COMPACTION_DELAY", &COMPACTION_DELAY);
-    get_string_from_config(logger, config, "SCRIPTS_BASEPATH", &SCRIPTS_BASEPATH);
-    get_string_from_config(logger, config, "PUERTO_KERNEL_MEMORY", &PUERTO_KERNEL_MEMORY);
+    get_string_from_config(config, "LOG_LEVEL", &LOG_LEVEL);
+    get_int_from_config(config, "SEGMENT_MAX_SIZE", &SEGMENT_MAX_SIZE);
+    get_string_from_config(config, "ALLOCATION_STRATEGY", &ALLOCATION_STRATEGY);
+    get_int_from_config(config, "INSTRUCTION_DELAY", &INSTRUCTION_DELAY);
+    get_int_from_config(config, "COMPACTION_DELAY", &COMPACTION_DELAY);
+    get_string_from_config(config, "SCRIPTS_BASEPATH", &SCRIPTS_BASEPATH);
+    get_string_from_config(config, "PUERTO_KERNEL_MEMORY", &PUERTO_KERNEL_MEMORY);
 
     //Creamos el logger apartir del valor del config
     t_log_level nivelLogger = log_level_from_string(LOG_LEVEL);
     logger = log_create("kernel_memory.log", "kernel_memory", 1, nivelLogger);
+
     return;
 }
 
