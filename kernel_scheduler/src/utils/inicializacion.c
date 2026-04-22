@@ -17,16 +17,15 @@ void inicializarModulo(char* pathConfig){
     }
 
     //Leemos los valores y guardamos en las variables globales
-    // TODO utilizar las funciones del utils para recuperar los valores
-    LOG_LEVEL = config_get_string_value(config, "LOG_LEVEL");
-    PLANIFICATION_ALGORITHM = config_get_string_value(config, "PLANIFICATION_ALGORITHM");
-    QUEUES_ALGORITHMS = config_get_array_value(config, "QUEUES_ALGORITHMS");
-    RR_QUANTUM = 	config_get_int_value(config, "RR_QUANTUM");
-    QUEUE_PREEMPTION = config_get_string_value(config, "QUEUE_PREEMPTION");
-    SUSPENSION_TIMEOUT = 	config_get_int_value(config, "SUSPENSION_TIMEOUT"); 
-    IP_KERNEL_MEMORY = config_get_string_value(config,"IP_KERNEL_MEMORY");
-    PUERTO_KERNEL_MEMORY = config_get_string_value(config, "PUERTO_KERNEL_MEMORY");
-    PUERTO_KERNEL_SCHEDULER = config_get_string_value(config, "PUERTO_KERNEL_SCHEDULER");
+    get_string_from_config(config, "LOG_LEVEL", &LOG_LEVEL);
+    get_string_from_config(config, "PLANIFICATION_ALGORITHM", &PLANIFICATION_ALGORITHM);
+    get_array_from_config(config, "QUEUES_ALGORITHMS", &QUEUES_ALGORITHMS);
+    get_int_from_config(config, "RR_QUANTUM", &RR_QUANTUM);
+    get_string_from_config(config, "QUEUE_PREEMPTION", &QUEUE_PREEMPTION);
+    get_int_from_config(config, "SUSPENSION_TIMEOUT", &SUSPENSION_TIMEOUT);
+    get_string_from_config(config, "IP_KERNEL_MEMORY", &IP_KERNEL_MEMORY);
+    get_string_from_config(config, "PUERTO_KERNEL_MEMORY", &PUERTO_KERNEL_MEMORY);
+    get_string_from_config(config, "PUERTO_KERNEL_SCHEDULER", &PUERTO_KERNEL_SCHEDULER);
 
     //Creamos el logger apartir del valor del config
     t_log_level nivelLogger = log_level_from_string(LOG_LEVEL);
