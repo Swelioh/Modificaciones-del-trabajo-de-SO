@@ -1,6 +1,7 @@
 #include <utils/inicializacion.h>
 
 int main(int argc, char* argv[]) {
+    pthread_t hilo;
 
     validarArgumentos (argc);
 
@@ -16,14 +17,15 @@ int main(int argc, char* argv[]) {
     // TODO: Hacer servidor multihilo
     // SERVIDOR PARA CPU / IO / (Memory?)(Puerto distinto del server de memory)
 	int conexion_servidor = iniciar_servidor(logger, PUERTO_KERNEL_SCHEDULER);
-    // Esperamos a la IO
-    esperar_cliente(conexion_servidor, logger);
-    // Esperamos a la CPU
-    esperar_cliente(conexion_servidor, logger);
     
-    //Liberar recursos TODO!!!
-    liberar_conexion(conexion);
+    int* fd_ptr = malloc(sizeof(int));
+    *fd_ptr = conexion_servidor;
+
+    pthread_create(&hilo, NULL, hilo_aceptador, fd_ptr);
+    
+    //Liberar recursos TODO!!! Cada Hilo maneja su desconexion.
+    /*liberar_conexion(conexion);
     liberar_conexion(conexion_servidor);
-    liberarModulo(logger, config);
+    liberarModulo(logger, config);*/
     return 0;
 }
