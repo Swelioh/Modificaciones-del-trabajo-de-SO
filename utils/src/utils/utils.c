@@ -121,3 +121,13 @@ void get_int_from_config(t_config* config, char* clave, int* valor)
         exit(EXIT_FAILURE);
     }
 }
+
+void get_array_from_config(t_config* config, char* clave, char*** valor)
+{
+    if(config_has_property(config,clave)){
+        *valor = config_get_array_value(config, clave);
+    }else{
+        printf("FALTA CLAVE: %s\n", clave);
+        exit(EXIT_FAILURE);
+    }
+}

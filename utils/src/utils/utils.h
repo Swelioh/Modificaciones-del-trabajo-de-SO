@@ -19,19 +19,21 @@
 */
 void saludar(char* quien);
 
-// Funciones para CLIENTE
-
+// *********************************************
+//              Prototipos
+// *********************************************
+// Cliente
 int crear_conexion(char* ip, char* puerto);
 void liberar_conexion(int socket_cliente);
 
-// Funciones para SERVIDOR
+// Servidor
 int iniciar_servidor(t_log* logger, char* puerto);
 int esperar_cliente(int socket_servidor, t_log * logger);
 
-//Config
+// Config
 t_config* iniciar_config(void);
-
 void get_string_from_config(t_config* config, char* clave, char** valor);
 void get_int_from_config(t_config* config, char* clave, int* valor);
+void get_array_from_config(t_config* config, char* clave, char*** valor);
 
 #endif
