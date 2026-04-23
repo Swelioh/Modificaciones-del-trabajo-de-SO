@@ -131,3 +131,104 @@ void get_array_from_config(t_config* config, char* clave, char*** valor)
         exit(EXIT_FAILURE);
     }
 }
+
+int recibir_operacion(int socket_cliente)
+{
+	int cod_op;
+	if(recv(socket_cliente, &cod_op, sizeof(int), MSG_WAITALL) > 0)
+		return cod_op;
+	else
+	{
+		close(socket_cliente);
+		return -1;
+	}
+}
+
+// FUNCIONES
+// Crea la estructura del paquete que se va a enviar (Codigo de operacion + Buffer)
+t_paquete* crear_paquete(op_code codigo)
+{
+	t_paquete* paquete = malloc(sizeof(t_paquete));
+	paquete->codigo_operacion = codigo;
+	crear_buffer(paquete);
+	return paquete;
+}
+// Crea el buffer que va a contener la informacion que se quiere enviar (El payload)
+void crear_buffer(t_paquete* paquete)
+{
+	paquete->buffer = malloc(sizeof(t_buffer));
+	paquete->buffer->size = 0;
+	paquete->buffer->stream = NULL;
+}
+void agregar_int32_al_buffer(t_buffer *buffer, int32_t variable)
+{
+	// Pido mas memoria dinamica para almacenar esta nueva variable
+	buffer->stream = realloc(buffer->stream, buffer->size + sizeof(int32_t)); // TODO: Habria que preguntar si se pudo realocar?
+	// Copio en el stream (posicionandome al final) la nueva variable
+	memcpy(buffer->stream + buffer->size, &variable, sizeof(int32_t));
+	// actualizo el tamanio total del buffer
+	buffer->size += sizeof(int32_t);
+}
+// Lee un int32 del buffer y me adelanta el offset del buffer
+int32_t leer_int32_del_buffer(t_buffer *buffer)
+{
+	int32_t variable;
+	// Utilizando el offset para posicionarme, me ubico
+    memcpy(&variable, buffer->stream + buffer->offset, sizeof(int32_t));
+	// Actualizo el tamanio total del offset
+    buffer->offset += sizeof(int32_t);
+	return variable;
+}
+// Agrega un string al buffer. El largo_string ES SIN EL \0. 
+void agregar_string_al_buffer(t_buffer *buffer, uint32_t largo_string, char *string)
+{
+	// Primero tengo que agregar al buffer el tamanio que va a ocupar el string (Sumo 1 para considerar el \0)
+	agregar_int32_al_buffer(buffer, largo_string + 1);
+	// Ahora pido mas memoria para almacenar el string
+	buffer->stream = realloc(buffer->stream, buffer->size + largo_string + 1); // TODO: Habria que preguntar si se pudo realocar?
+	// Copio en el stream (posicionandome al final) el string
+	memcpy(buffer->stream + buffer->size, string, largo_string + 1);
+	// actualizo el tamanio total del buffer
+	buffer->size += (largo_string + 1);
+}
+// Lee el string del buffer. LUEGO HAY QUE LIBERAR LA MEMORIA DEL STRING
+char *leer_string_del_buffer(t_buffer *buffer)
+{
+	int largo_string = leer_int32_del_buffer(buffer);
+	char *string = malloc(largo_string);
+	// Utilizando el offset para posicionarme, me ubico al comienzo del string y lo copio
+    memcpy(string, buffer->stream + buffer->offset, sizeof(int32_t));
+	// Actualizo el tamanio total del offset
+    buffer->offset += largo_string;
+	return string;
+}
+void eliminar_paquete(t_paquete* paquete)
+{
+	free(paquete->buffer->stream);
+	free(paquete->buffer);
+	free(paquete);
+}
+
+t_paquete* recibir_paquete_completo(int fd) {
+    op_code codigo;
+    if (recv(fd, &codigo, sizeof(op_code), MSG_WAITALL) <= 0)
+        return NULL;
+
+    uint32_t size;
+    if (recv(fd, &size, sizeof(uint32_t), MSG_WAITALL) <= 0)
+        return NULL;
+
+    t_paquete* paquete = crear_paquete(codigo);
+    paquete->buffer->size = size;
+
+    if (size > 0) {
+        paquete->buffer->stream = malloc(size);
+        if (recv(fd, paquete->buffer->stream, size, MSG_WAITALL) <= 0) {
+            eliminar_paquete(paquete);
+            return NULL;
+        }
+    }
+
+    paquete->buffer->offset = 0; 
+    return paquete;
+}
