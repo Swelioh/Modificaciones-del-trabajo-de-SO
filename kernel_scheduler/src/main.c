@@ -1,56 +1,61 @@
-#include <utils/utils.h>
-
-void liberar_recursos(t_log* logger, t_config* config, int conexion_scheduler, int conexion_memory)
-{
-    liberar_conexion(conexion_scheduler);
-    liberar_conexion(conexion_memory);
-    log_destroy(logger);
-    config_destroy(config);
-}
+#include <utils/inicializacion.h>
 
 int main(int argc, char* argv[]) {
-    t_log* logger = log_create("kernel_scheduler.log", "kernel_scheduler", 1, LOG_LEVEL_TRACE);
+    // pthread_t hilo;
 
-    char* ip;
-    char* puerto_kernel_memory;
-    char* puerto_kernel_scheduler;
+    validarArgumentos (argc);
 
-    if (argc != 3) {
-        log_error(logger, "Uso: %s [Archivo Config] [Path Proceso Inicial]\n", argv[0]);
-        return EXIT_FAILURE;
+    inicializarModulo(argv[1]);
+
+	log_info(logger, "IP: %s", IP_KERNEL_MEMORY);
+	log_info(logger, "PUERTO_KERNEL_MEMORY: %s", PUERTO_KERNEL_MEMORY);
+    log_info(logger, "> Kernel Scheduler Listo");
+
+    // Nos conectamos al Kernel Memory
+	int conexion_memory = crear_conexion(logger, IP_KERNEL_MEMORY, PUERTO_KERNEL_MEMORY);
+    if(conexion_memory == -1)
+    {
+        log_error(logger, "No se pudo establecer la conexion con el Modulo Kernel Memory. Finalizando el programa.");
+        liberarModulo(logger, config);
+        exit(EXIT_FAILURE);
     }
 
-    // CONEXION CLIENTE CON KERNEL MEMORY
-    t_config* config = config_create(argv[1]);
-    if (config == NULL) {
-        log_error(logger, "No se pudo cargar el config: %s\n", argv[1]);
-        return EXIT_FAILURE;
-    }
-    get_string_from_config(config, "IP", &ip);
-    get_string_from_config(config, "PUERTO_KERNEL_SCHEDULER", &puerto_kernel_scheduler);
-    get_string_from_config(config, "PUERTO_KERNEL_MEMORY", &puerto_kernel_memory);
-	
-    log_info(logger, "IP: %s", ip);
-	log_info(logger, "PUERTO_KERNEL_MEMORY: %s", puerto_kernel_memory);
-    log_info(logger, "PUERTO_KERNEL_SCHEDULER: %s", puerto_kernel_scheduler);
+    // //Iniciamos servidor para escuchar conexiones de CPU e IO
+	// int conexion_servidor = iniciar_servidor(logger, PUERTO_KERNEL_SCHEDULER);
+
+    // while (1) {
+    //     int fd_cliente = esperar_cliente(conexion_servidor, logger);
+
+    //     // Reservamos memoria para pasar ambos parámetros
+    //     t_args* args = malloc(sizeof(t_args));
+    //     args->fd = fd_cliente;
+    //     args->conexion_servidor = conexion_servidor;
+
+    //     // handshake. Crear un estructura para regitrar lo que tenemos
+    //     t_paquete* hs = recibir_paquete_completo(fd);
+    //     if (hs == NULL) { close(fd); return NULL; }
+    //     int tipo = hs->codigo_operacion;
+    //     eliminar_paquete(hs);
+
+    //     switch (hs) {
+	// 	case HANDSHAKE_CPU:
+	// 		    pthread_create(&hilo, NULL, (void*) handler_cpu, args);
+	// 		break;
+	// 	case HANDSHAKE_IO:
+	// 		    pthread_create(&hilo, NULL, (void*) handler_io, args);
+	// 		break;
+	// 	case -1:
+	// 		log_error(logger, "el cliente se desconecto. Terminando servidor");
+	// 		return EXIT_FAILURE;
+	// 	default:
+	// 		log_warning(logger,"Operacion desconocida. No quieras meter la pata");
+	// 		break;
+	// 	}
+	// }
     
-    // Conexion para memory
-	int conexion_kernel_memory = crear_conexion(ip, puerto_kernel_memory);
-    log_info(logger, "> Kernel Scheduler Conectado a Kernel Memory");
-
-    // TODO: Hacer servidor multihilo
-    // SERVIDOR PARA CPU / IO
-	int conexion_scheduler = iniciar_servidor(logger, puerto_kernel_scheduler);
-   
-    // Esperamos a la IO
-    esperar_cliente(conexion_scheduler, logger);
-    // Esperamos a la CPU
-    esperar_cliente(conexion_scheduler, logger);
-
-    manejar_paquete(conexion);
-
-    liberar_recursos(logger, config, conexion_scheduler, conexion_kernel_memory);
-
-    saludar("kernel_scheduler");
+    //Liberar recursos TODO!!! Cada Hilo maneja su desconexion.
+    /*liberar_conexion(conexion);
+    liberar_conexion(conexion_servidor);*/
+    liberarModulo(logger, config);
     return 0;
 }

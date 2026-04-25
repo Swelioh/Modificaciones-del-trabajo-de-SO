@@ -39,19 +39,18 @@ int main(int argc, char* argv[]) {
 	log_info(logger, "PUERTO_KERNEL_MEMORY: %s", puerto_kernel_memory);
 
     // CONEXION CLIENTE CON KERNEL SCHEDULER
-	int conexion_scheduler = crear_conexion(ip, puerto_kernel_scheduler);
+	int conexion_scheduler = crear_conexion(logger, ip, puerto_kernel_scheduler);
     log_info(logger, "> Modulo CPU Conectado a Scheduler");
 
     // CONEXION CLIENTE CON MEMORY STICK
-    int conexion_stick = crear_conexion(ip, puerto_memory_stick);
+    int conexion_stick = crear_conexion(logger, ip, puerto_memory_stick);
     log_info(logger, "> Modulo CPU Conectado a Memory Stick");
 
     // CONEXION CLIENTE CON KERNEL MEMORY
-	int conexion_memory = crear_conexion(ip, puerto_kernel_memory);
+	int conexion_memory = crear_conexion(logger, ip, puerto_kernel_memory);
     log_info(logger, "> Modulo CPU Conectado a Kernel Memory");
 
     liberar_recursos(logger, config, conexion_scheduler, conexion_stick, conexion_memory);
 
-    saludar("cpu");
     return 0;
 }

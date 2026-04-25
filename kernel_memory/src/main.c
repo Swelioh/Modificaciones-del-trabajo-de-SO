@@ -45,6 +45,5 @@ int main(int argc, char* argv[]) {
     liberar_recursos(logger, config);
     liberar_conexion(conexion_servidor);
 
-    saludar("kernel_memory");
     return 0;
 }
