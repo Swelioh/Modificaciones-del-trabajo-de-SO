@@ -1,4 +1,8 @@
 #include "inicializacion.h"
+typedef struct {
+    int fd;
+    int conexion_servidor;
+} t_args;
 
 void validarArgumentos (int cantidadArgumentos){
     if (cantidadArgumentos != 3) {
@@ -10,11 +14,7 @@ void validarArgumentos (int cantidadArgumentos){
 
 void inicializarModulo(char* pathConfig){
     // Instanciamos el config
-    config = config_create(pathConfig);
-    if(config == NULL){
-        printf("No se pudo inicializar el archivo de config, por favor revise el path. Actual: '%s'\n", pathConfig);
-        exit(EXIT_FAILURE) ;
-    }
+    t_config* config = abrirConfig(pathConfig);
 
     //Leemos los valores y guardamos en las variables globales
     get_string_from_config(config, "LOG_LEVEL", &LOG_LEVEL);
@@ -33,9 +33,111 @@ void inicializarModulo(char* pathConfig){
     return;
 }
 
+void handler_cpu(t_args* args) {
+    printf("FALTA IMPLEMENTAR");
+    // int fd = args->fd;
+    // free(args);
+
+    // while (1) {
+    //     t_paquete* paquete = recibir_paquete_completo(fd);
+
+    //     if (paquete == NULL) {
+    //         manejar_desconexion(fd, CPU);
+    //         close(fd);
+    //         break;
+    //     }
+
+    //     switch (paquete->codigo_operacion) {
+
+    //         case OP_CREAR_PROCESO: {
+    //             int32_t pid = leer_int32_del_buffer(paquete->buffer);
+    //             string psuedocodigo = leer_string_del_buffer(paquete->buffer);
+    //             procesar_fin(pid);
+    //             break;
+    //         }
+            
+    //         case OP_FIN_PROCESO: {
+    //             int32_t pid = leer_int32_del_buffer(paquete->buffer);
+    //             procesar_fin(pid);
+    //             break;
+    //         }
+
+    //         case OP_SYSCALL: {
+    //             int32_t syscall = leer_int32_del_buffer(paquete->buffer);
+    //             manejar_syscall(syscall, paquete->buffer);
+    //             break;
+    //         }
+
+    //         case OP_INTERRUPCION: {
+    //             manejar_interrupcion();
+    //             break;
+    //         }
+    //     }
+
+    //     eliminar_paquete(paquete);
+    // }
+}
+
+void handler_io(t_args* args) {
+    printf("FALTA IMPLEMENTAR");
+    // int fd = args->fd;
+    // free(args);
+
+    // while (1) {
+    //     t_paquete* paquete = recibir_paquete_completo(fd);
+
+    //     if (paquete == NULL) {
+    //         manejar_desconexion(fd, IO);
+    //         close(fd);
+    //         break;
+    //     }
+
+    //     switch (paquete->codigo_operacion) {
+
+    //         case OP_IO_FIN: {
+    //             int32_t pid = leer_int32_del_buffer(paquete->buffer);
+    //             finalizar_io(pid);
+    //             break;
+    //         }
+
+    //     }
+
+    //     eliminar_paquete(paquete);
+    // }
+}
+
+void manejar_desconexion(int conexion_servidor, int tipo_cliente){
+    printf("FALTA IMPLEMENTAR");
+    // switch (tipo_cliente) {
+    //     case TIPO_CPU:
+    //         liberar_conexion(conexion_servidor);//desconectar_cpu(fd) Cada desconexion se resuelve de distinta forma.
+    //         break;
+    //     case TIPO_IO:
+    //         liberar_conexion(conexion_servidor);//desconectar_io(fd); Cada desconexion se resuelve de distinta forma.
+    //         break;
+    // }
+}
+
 void liberarModulo(t_log* logger_a_destruir,t_config* config_a_destruir){
     log_destroy(logger_a_destruir);
     if(!string_array_is_empty(QUEUES_ALGORITHMS))
         string_array_destroy(QUEUES_ALGORITHMS);
     config_destroy(config_a_destruir);
+}
+
+void crear_proceso(char* path, int prioridad){
+    printf("FALTA IMPLEMENTAR");
+    // log_debug(logger,
+    //     "Se solicita crear proceso -> PATH: %s | PRIORIDAD: %d",
+    //     path,
+    //     prioridad
+    // );
+}
+
+void procesar_fin(int pid){
+    printf("FALTA IMPLEMENTAR");
+    // log_debug(logger,
+    //     "Finalización de proceso -> PID: %d ",
+    //     pid
+    // );
 }

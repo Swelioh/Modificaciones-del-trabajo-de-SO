@@ -12,26 +12,19 @@
 #include<commons/config.h>
 #include<commons/string.h>
 
-/**
-* @brief Imprime un saludo por consola
-* @param quien Módulo desde donde se llama a la función
-* @return No devuelve nada
-*/
-void saludar(char* quien);
 
-// *********************************************
-//              Prototipos
-// *********************************************
 // Cliente
-int crear_conexion(char* ip, char* puerto);
+int crear_conexion(t_log* logger, char* ip, char* puerto);
+void manejar_desconexion(int fd_cliente, int tipo_cliente);
 void liberar_conexion(int socket_cliente);
 
 // Servidor
 int iniciar_servidor(t_log* logger, char* puerto);
 int esperar_cliente(int socket_servidor, t_log * logger);
+int recibir_operacion(int socket_cliente);
 
 // Config
-t_config* iniciar_config(void);
+t_config* abrirConfig(char* pathAlConfig);
 void get_string_from_config(t_config* config, char* clave, char** valor);
 void get_int_from_config(t_config* config, char* clave, int* valor);
 void get_array_from_config(t_config* config, char* clave, char*** valor);

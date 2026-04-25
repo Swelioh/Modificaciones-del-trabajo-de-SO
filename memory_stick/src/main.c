@@ -35,7 +35,7 @@ int main(int argc, char* argv[]) {
 	log_info(logger, "PUERTO_MEMORY_STICK: %s", puerto_memory_stick);
    
     // Conexion para memory
-	int conexion_kernel_memory = crear_conexion(ip, puerto_kernel_memory);
+	int conexion_kernel_memory = crear_conexion(logger, ip, puerto_kernel_memory);
 
 	int conexion_memory_stick = iniciar_servidor(logger, puerto_memory_stick);
    
@@ -46,6 +46,5 @@ int main(int argc, char* argv[]) {
     
     liberar_recursos(logger, config, conexion_memory_stick, conexion_kernel_memory);
     
-    saludar("kernel_scheduler");
     return 0;
 }

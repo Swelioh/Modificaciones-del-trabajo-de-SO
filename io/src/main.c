@@ -31,11 +31,10 @@ int main(int argc, char* argv[]) {
 	log_info(logger, "PUERTO_KERNEL_SCHEDULER: %s", puerto_kernel_scheduler);
     
     // CONEXION CLIENTE CON KERNEL SCHEDULER
-	int conexion_scheduler = crear_conexion(ip, puerto_kernel_scheduler);
+	int conexion_scheduler = crear_conexion(logger, ip, puerto_kernel_scheduler);
     log_info(logger, "> Modulo IO Conectado a Scheduler");
 
     liberar_recursos(logger, config, conexion_scheduler);
 
-    saludar("io");
     return 0;
 }
