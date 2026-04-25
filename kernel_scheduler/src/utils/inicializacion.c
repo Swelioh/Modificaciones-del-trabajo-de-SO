@@ -37,65 +37,68 @@ void inicializarModulo(char* pathConfig){
     return;
 }
 
-void* hilo_aceptador(void* arg) {
-    int conexion_servidor =  *((int*) arg);  
-
-    while (1) {
-        int fd_cliente = esperar_cliente(conexion_servidor, logger);
-
-        int* fd_cliente_ptr = malloc(sizeof(int));
-        *fd_cliente_ptr = fd_cliente;
-
-        // Reservamos memoria para pasar ambos parámetros
-        t_args* args = malloc(sizeof(t_args));
-        args->fd = fd_cliente;
-        args->conexion_servidor = conexion_servidor;
-
-        pthread_t hilo;
-        pthread_create(&hilo, NULL, hilo_handler, args);
-        pthread_detach(hilo);
-    }
-    return NULL;
-}
-
-void* hilo_handler(void* arg) {
-    t_args* args = (t_args*) arg;
+void handler_cpu(t_args* args) {
     int fd = args->fd;
-    int conexion_servidor = args->conexion_servidor;
     free(args);
-
-    // handshake
-    t_paquete* hs = recibir_paquete_completo(fd);
-    if (hs == NULL) { close(fd); return NULL; }
-    int tipo = hs->codigo_operacion;
-    eliminar_paquete(hs);
 
     while (1) {
         t_paquete* paquete = recibir_paquete_completo(fd);
+
         if (paquete == NULL) {
-            manejar_desconexion(fd, tipo);
+            manejar_desconexion(fd, CPU);
             close(fd);
             break;
         }
 
-        // resetear offset para leer desde el principio
-        paquete->buffer->offset = 0;
-
         switch (paquete->codigo_operacion) {
 
             case OP_CREAR_PROCESO: {
-                char*   path      = leer_string_del_buffer(paquete->buffer);
-                int32_t prioridad = leer_int32_del_buffer(paquete->buffer);
-                crear_proceso(path, prioridad);
-
-                free(path);
+                int32_t pid = leer_int32_del_buffer(paquete->buffer);
+                string psuedocodigo = leer_string_del_buffer(paquete->buffer);
+                procesar_fin(pid);
                 break;
             }
-
-
+            
             case OP_FIN_PROCESO: {
                 int32_t pid = leer_int32_del_buffer(paquete->buffer);
                 procesar_fin(pid);
+                break;
+            }
+
+            case OP_SYSCALL: {
+                int32_t syscall = leer_int32_del_buffer(paquete->buffer);
+                manejar_syscall(syscall, paquete->buffer);
+                break;
+            }
+
+            case OP_INTERRUPCION: {
+                manejar_interrupcion();
+                break;
+            }
+        }
+
+        eliminar_paquete(paquete);
+    }
+}
+
+void handler_io(t_args* args) {
+    int fd = args->fd;
+    free(args);
+
+    while (1) {
+        t_paquete* paquete = recibir_paquete_completo(fd);
+
+        if (paquete == NULL) {
+            manejar_desconexion(fd, IO);
+            close(fd);
+            break;
+        }
+
+        switch (paquete->codigo_operacion) {
+
+            case OP_IO_FIN: {
+                int32_t pid = leer_int32_del_buffer(paquete->buffer);
+                finalizar_io(pid);
                 break;
             }
 
@@ -103,8 +106,6 @@ void* hilo_handler(void* arg) {
 
         eliminar_paquete(paquete);
     }
-
-    return NULL;
 }
 
 void manejar_desconexion(int conexion_servidor, int tipo_cliente){

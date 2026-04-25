@@ -4,31 +4,26 @@
 #include <utils/utils.h>
 #include "variablesGlobales.h"
 #include<pthread.h>
-
 // en utils.h o en un header propio (ej: protocolo.h)
 typedef enum {
-    // operaciones entre módulos
-    OP_CREAR_PROCESO = 0,
-    OP_SYSCALL       = 1,
-    OP_FIN_PROCESO   = 2,
-    OP_FIN_QUANTUM   = 3,
-    OP_INTERRUPCION  = 4,
 
-    // handshake — quién se conecta
-    TIPO_CPU         = 10,
-    TIPO_IO          = 11,
+    // 🔌 Handshake
+    HANDSHAKE_CPU = 1,
+    HANDSHAKE_IO  = 2,
 
-    // syscalls
-    SYSCALL_SLEEP        = 20,
-    SYSCALL_STDIN        = 21,
-    SYSCALL_STDOUT       = 22,
-    SYSCALL_MUTEX_CREATE = 23,
-    SYSCALL_MUTEX_LOCK   = 24,
-    SYSCALL_MUTEX_UNLOCK = 25,
-    SYSCALL_MEM_ALLOC    = 26,
-    SYSCALL_MEM_FREE     = 27,
-    SYSCALL_EXIT         = 28,
-} t_cod_op;
+    // 🧠 CPU → Kernel
+    OP_CREAR_PROCESO = 10
+    OP_FIN_PROCESO = 11,
+    OP_SYSCALL     = 11,
+    OP_INTERRUPCION= 12,
+
+    // 💾 IO → Kernel
+    OP_IO_FIN      = 20,
+
+    // 🧠 Kernel → CPU
+    OP_EJECUTAR_PROCESO = 30
+
+} codigo_operacion;
 
 // *********************************************
 //              Prototipos
