@@ -1,7 +1,8 @@
 #ifndef SCHEDULER_GLOBALS_H_
 #define SCHEDULER_GLOBALS_H_
 
-#include <utils/utils.h>
+#include<commons/log.h>
+#include<commons/config.h>
 
 // *********************************************
 //              Variables globales

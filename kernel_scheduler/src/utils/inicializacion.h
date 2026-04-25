@@ -1,10 +1,14 @@
 #ifndef SCHEDULER_UTILS_H_
 #define SCHEDULER_UTILS_H_
 
-#include <utils/utils.h>
+#include <utils/utils.h> //Para usar funciones para crear servidores
+#include<pthread.h> //Para crear hilos
 #include "variablesGlobales.h"
-#include<pthread.h>
-// en utils.h o en un header propio (ej: protocolo.h)
+#include <serializacion/estructuras.h>
+#include <serializacion/serializacion.h>
+
+
+// en utils.h o en un header propio (ej: protocolo.h)S
 typedef enum {
 
     // 🔌 Handshake
@@ -12,7 +16,7 @@ typedef enum {
     HANDSHAKE_IO  = 2,
 
     // 🧠 CPU → Kernel
-    OP_CREAR_PROCESO = 10
+    OP_CREAR_PROCESO = 10,
     OP_FIN_PROCESO = 11,
     OP_SYSCALL     = 11,
     OP_INTERRUPCION= 12,
