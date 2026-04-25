@@ -10,21 +10,16 @@
 
 // en utils.h o en un header propio (ej: protocolo.h)S
 typedef enum {
-
-    // 🔌 Handshake
     HANDSHAKE_CPU = 1,
     HANDSHAKE_IO  = 2,
 
-    // 🧠 CPU → Kernel
     OP_CREAR_PROCESO = 10,
     OP_FIN_PROCESO = 11,
     OP_SYSCALL     = 11,
     OP_INTERRUPCION= 12,
 
-    // 💾 IO → Kernel
     OP_IO_FIN      = 20,
 
-    // 🧠 Kernel → CPU
     OP_EJECUTAR_PROCESO = 30
 
 } codigo_operacion;
