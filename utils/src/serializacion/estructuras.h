@@ -1,5 +1,3 @@
-
-
 #ifndef ESTRUCTURAS_H_
 #define ESTRUCTURAS_H_
 
@@ -8,7 +6,7 @@
 // ********************************************************************************
 //                            ESTRUCTURAS DE PAQUETES
 // *********************************************************************************
-typedef enum
+typedef enum // TODO: BORRAR PORQUE YA ESTA EL ENUM PARA EL HANDSHAKE EN UTILS VARIABLES GLOBALES
 {
 	INGRESO_CPU,
 	INGRESO_IO
@@ -30,7 +28,7 @@ typedef struct
 // ********************************************************************************
 //                          ESTRUCTURAS DE MENSAJES
 // *********************************************************************************
-
+// TODO DEBERIA ESTAR EN SCHEDULER SI NO SE COMPARTE
 //Modeliza el mensaje que envia CPU al SCHEDULER avisando que se dispone de una CPU nueva para el procesamiento de datos
 typedef struct
 {

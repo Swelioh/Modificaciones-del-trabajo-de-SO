@@ -1,0 +1,22 @@
+#ifndef VARIABLES_GLOBALES_H_
+#define VARIABLES_GLOBALES_H_
+
+typedef enum {
+    HANDSHAKE_CPU = 1,
+    HANDSHAKE_IO  = 2,
+    HANDSHAKE_KERNEL_SCHEDULER = 3,
+    HANDSHAKE_MEMORY_STICK = 4,
+    HANDSHAKE_SWAP = 5,
+
+    OP_CREAR_PROCESO = 10,
+    OP_FIN_PROCESO = 11,
+    OP_SYSCALL     = 11,
+    OP_INTERRUPCION= 12,
+
+    OP_IO_FIN      = 20,
+
+    OP_EJECUTAR_PROCESO = 30
+
+} codigo_operacion;
+
+#endif

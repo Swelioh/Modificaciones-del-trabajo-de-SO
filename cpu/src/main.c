@@ -9,19 +9,8 @@ void liberar_recursos(t_log* logger, t_config* config, int conexion_scheduler, i
     config_destroy(config);
 }
 
-void enviar_opcode(int socket, uint8_t cod_op) {
-
-    uint32_t size = 0; // no hay payload
-
-    // mandamos código de operación
-    send(socket, &cod_op, sizeof(uint8_t), 0);
-
-    // mandamos tamaño (0)
-    send(socket, &size, sizeof(uint32_t), 0);
-}
-
 int main(int argc, char* argv[]) {
-    t_log* logger = log_create("modulo_io.log", "modulo_io", 1, LOG_LEVEL_TRACE);
+    t_log* logger = log_create("modulo_cpu.log", "modulo_cpu", 1, LOG_LEVEL_TRACE);
 
     char* ip;
     char* puerto_kernel_scheduler;
@@ -49,23 +38,19 @@ int main(int argc, char* argv[]) {
 	log_info(logger, "PUERTO_MEMORY_STICK: %s", puerto_memory_stick);
 	log_info(logger, "PUERTO_KERNEL_MEMORY: %s", puerto_kernel_memory);
 
-    // // CONEXION CLIENTE CON KERNEL SCHEDULER
-	// int conexion_scheduler = crear_conexion(logger, ip, puerto_kernel_scheduler);
-    // log_info(logger, "> Modulo CPU Conectado a Scheduler");
+    // CONEXION CLIENTE CON KERNEL SCHEDULER
+	int conexion_scheduler = crear_conexion(logger, ip, puerto_kernel_scheduler);
+    log_info(logger, "> Modulo CPU Conectado a Scheduler");
 
-    // // CONEXION CLIENTE CON MEMORY STICK
-    // int conexion_stick = crear_conexion(logger, ip, puerto_memory_stick);
-    // log_info(logger, "> Modulo CPU Conectado a Memory Stick");
+    // CONEXION CLIENTE CON MEMORY STICK
+    int conexion_stick = crear_conexion(logger, ip, puerto_memory_stick);
+    log_info(logger, "> Modulo CPU Conectado a Memory Stick");
 
-    // CONEXION CLIENTE CON KERNEL MEMORY
-	// int conexion_memory = crear_conexion(logger, ip, puerto_kernel_memory);//viejo, no anda
-	int conexion_memory = crear_conexion(ip, puerto_kernel_memory);
+    CONEXION CLIENTE CON KERNEL MEMORY
+	int conexion_memory = crear_conexion(logger, ip, puerto_kernel_memory);
     log_info(logger, "> Modulo CPU Conectado a Kernel Memory");
 
-    //Enviar cod_op
-    enviar_opcode(conexion_memory, 1);
-
-    // liberar_recursos(logger, config, conexion_scheduler, conexion_stick, conexion_memory);
+    liberar_recursos(logger, config, conexion_scheduler, conexion_stick, conexion_memory);
 
     return 0;
 }

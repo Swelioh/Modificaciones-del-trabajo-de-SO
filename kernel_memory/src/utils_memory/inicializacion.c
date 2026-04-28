@@ -1,10 +1,5 @@
 #include "inicializacion.h"
 
-// typedef struct {
-//     int fd;
-//     int conexion_servidor;
-// } t_args;
-
 void validar_argumentos (int cantidadArgumentos){
     if (cantidadArgumentos != 2) {
         printf("La cantidad de argumentos ingresados no coincide. Formato -> [Archivo Config]\n");
