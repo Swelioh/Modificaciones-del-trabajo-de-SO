@@ -14,7 +14,8 @@
 
 
 // Cliente
-int crear_conexion(t_log* logger, char* ip, char* puerto);
+// int crear_conexion(t_log* logger, char* ip, char* puerto);//viejo
+int crear_conexion(char* ip, char* puerto);
 void manejar_desconexion(int fd_cliente, int tipo_cliente);
 void liberar_conexion(int socket_cliente);
 

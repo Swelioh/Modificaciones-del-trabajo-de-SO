@@ -5,41 +5,81 @@
 // ********************************************************************************
 
 //Inicia la conexion con el servidor que esta escuchando en esa IP y PUERTO. Nos devuelve un fd del socket del cliente
-int crear_conexion(t_log* logger, char* ip, char* puerto)
+// int crear_conexion(t_log* logger, char* ip, char* puerto)
+// {
+// 	struct addrinfo hints;
+// 	struct addrinfo *server_info;
+// 	int socket_cliente;
+
+// 	memset(&hints, 0, sizeof(hints));
+// 	hints.ai_family = AF_INET;
+// 	hints.ai_socktype = SOCK_STREAM;
+
+// 	if (getaddrinfo(ip, puerto, &hints, &server_info) != 0) {
+// 		log_error(logger, "No se pudo hacer el getaddrinfo al momento de conectarse el servidor.");
+// 		return -1;
+// 	}
+
+// 	// Le pedimos al SO que nos de un socket para asi poder comunicarnos con otro proceso
+// 	socket_cliente = socket(server_info->ai_family, server_info->ai_socktype, server_info->ai_protocol);
+// 	if (socket_cliente == -1) {
+//         log_error(logger, "Hubo un error al crear el socket.");
+// 		freeaddrinfo(server_info);
+// 		return -1;
+// 	}
+
+// 	// Iniciamos la conexion con el servidor
+// 	if (connect(socket_cliente, server_info->ai_addr, server_info->ai_addrlen) == -1) {
+//         log_error(logger, "Hubo un error al conectarse con el servidor.");
+// 		close(socket_cliente);
+// 		freeaddrinfo(server_info);
+// 		return -1;
+// 	}
+
+// 	freeaddrinfo(server_info);
+// 	printf("PUTOO: %d",socket_cliente);
+// 	return socket_cliente;
+// }
+
+int crear_conexion(char* ip, char* puerto)
 {
-	struct addrinfo hints;
-	struct addrinfo *server_info;
-	int socket_cliente;
+    struct addrinfo hints;
+    struct addrinfo *server_info;
+    int socket_cliente;
+    int estado;
 
-	memset(&hints, 0, sizeof(hints));
-	hints.ai_family = AF_INET;
-	hints.ai_socktype = SOCK_STREAM;
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_STREAM;
+    // hints.ai_flags = AI_PASSIVE;
 
-	if (getaddrinfo(ip, puerto, &hints, &server_info) != 0) {
-		log_error(logger, "No se pudo hacer el getaddrinfo al momento de conectarse el servidor.");
-		return -1;
-	}
+    estado = getaddrinfo(ip, puerto, &hints, &server_info);
+    if (estado != 0) {
+        fprintf(stderr, "Error en getaddrinfo: %s\n", gai_strerror(estado));
+        return -1;
+    }
 
-	// Le pedimos al SO que nos de un socket para asi poder comunicarnos con otro proceso
-	socket_cliente = socket(server_info->ai_family, server_info->ai_socktype, server_info->ai_protocol);
-	if (socket_cliente == -1) {
-        log_error(logger, "Hubo un error al crear el socket.");
-		freeaddrinfo(server_info);
-		return -1;
-	}
+    // Ahora vamos a crear el socket.
+    socket_cliente = socket(server_info->ai_family, server_info->ai_socktype, server_info->ai_protocol);
+    if (socket_cliente == -1) {
+        perror("Error al crear el socket");
+        freeaddrinfo(server_info);
+        return -1;
+    }
 
-	// Iniciamos la conexion con el servidor
-	if (connect(socket_cliente, server_info->ai_addr, server_info->ai_addrlen) == -1) {
-        log_error(logger, "Hubo un error al conectarse con el servidor.");
-		close(socket_cliente);
-		freeaddrinfo(server_info);
-		return -1;
-	}
+    // Ahora que tenemos el socket, vamos a conectarlo
+    if (connect(socket_cliente, server_info->ai_addr, server_info->ai_addrlen) == -1) {
+        perror("Error al conectar con el servidor");
+        close(socket_cliente);
+        freeaddrinfo(server_info);
+        return -1;
+    }
 
-	freeaddrinfo(server_info);
+    freeaddrinfo(server_info);
 
-	return socket_cliente;
+    return socket_cliente;
 }
+
 
 //Cierra el fd del socket utilizado para la conexion
 void liberar_conexion(int socket_cliente)
@@ -48,62 +88,97 @@ void liberar_conexion(int socket_cliente)
 }
 
 // Inicia el servidor escuchando al puerto que le pasas como parametro y devuelve el fd del socket del servidor
+// int iniciar_servidor(t_log* logger,char* puerto)
+// {
+// 	int socket_servidor;
+
+// 	struct addrinfo hints, *servinfo;
+
+// 	memset(&hints, 0, sizeof(hints));
+// 	hints.ai_family = AF_INET;
+// 	hints.ai_socktype = SOCK_STREAM;
+// 	hints.ai_flags = AI_PASSIVE;
+
+// 	if (getaddrinfo(NULL, puerto, &hints, &servinfo) != 0) {
+//         log_error(logger, "No se pudo hacer el getaddrinfo al momento de iniciar el servidor.");
+//         return -1;
+//     }
+
+// 	// Le pedimos al SO que nos de un socket para asi poder comunicarnos con otro proceso
+//     socket_servidor = socket(servinfo->ai_family,
+//                         servinfo->ai_socktype,
+//                         servinfo->ai_protocol);
+
+// 	if (socket_servidor == -1) {
+//         log_error(logger, "Hubo un error al crear el socket.");
+//         freeaddrinfo(servinfo);
+//         return -1;
+//     }
+
+// 	// Configuramos el comportamiento del socket para que asi varios sockets puedan usar el mismo puerto (Para que no nos diga AddressAlreadyInUse cuando cerramos el server y lo abrimos al toque)
+// 	if (setsockopt(socket_servidor, SOL_SOCKET, SO_REUSEPORT, &(int){1}, sizeof(int)) == -1) {
+//         log_error(logger, "Error al configurar el socket.");
+//         close(socket_servidor);
+//         freeaddrinfo(servinfo);
+//         return -1;
+//     }
+
+//     // Asociamos el socket a un puerto en especifico donde vamos a escuchar
+// 	if (bind(socket_servidor, servinfo->ai_addr, servinfo->ai_addrlen) == -1) {
+//         log_error(logger, "Hubo un error al asociar el socket al puerto.");
+//         close(socket_servidor);
+//         freeaddrinfo(servinfo);
+//         return -1;
+//     }
+
+// 	// Ahora el socket queda esperando nuevas conexiones
+// 	if (listen(socket_servidor, SOMAXCONN) == -1) {
+//         log_error(logger, "Hubo al escuchar en el puerto.");
+//         close(socket_servidor);
+//         freeaddrinfo(servinfo);
+//         return -1;
+//     }
+
+// 	// Liberamos la memoria que pedimos con getaddrinfo
+// 	freeaddrinfo(servinfo);
+// 	printf("Escuchando por nuevos clientes en el puerto: %s\n", puerto);
+
+// 	return socket_servidor;
+// }
 int iniciar_servidor(t_log* logger,char* puerto)
 {
-	int socket_servidor;
+    int socket_servidor;
 
-	struct addrinfo hints, *servinfo;
+    struct addrinfo hints, *servinfo;
 
-	memset(&hints, 0, sizeof(hints));
-	hints.ai_family = AF_INET;
-	hints.ai_socktype = SOCK_STREAM;
-	hints.ai_flags = AI_PASSIVE;
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_flags = AI_PASSIVE;
 
-	if (getaddrinfo(NULL, puerto, &hints, &servinfo) != 0) {
-        log_error(logger, "No se pudo hacer el getaddrinfo al momento de iniciar el servidor.");
-        return -1;
-    }
+    getaddrinfo(NULL, puerto, &hints, &servinfo);
 
-	// Le pedimos al SO que nos de un socket para asi poder comunicarnos con otro proceso
+    // Creamos el socket de escucha del servidor
     socket_servidor = socket(servinfo->ai_family,
                         servinfo->ai_socktype,
                         servinfo->ai_protocol);
 
-	if (socket_servidor == -1) {
-        log_error(logger, "Hubo un error al crear el socket.");
-        freeaddrinfo(servinfo);
-        return -1;
-    }
 
-	// Configuramos el comportamiento del socket para que asi varios sockets puedan usar el mismo puerto (Para que no nos diga AddressAlreadyInUse cuando cerramos el server y lo abrimos al toque)
-	if (setsockopt(socket_servidor, SOL_SOCKET, SO_REUSEPORT, &(int){1}, sizeof(int)) == -1) {
-        log_error(logger, "Error al configurar el socket.");
-        close(socket_servidor);
-        freeaddrinfo(servinfo);
-        return -1;
-    }
+    // //Esto creo que es para que podamos tener varios sockets al mismo tiempo...
+    // setsockopt(fd_escucha, SOL_SOCKET, SO_REUSEPORT, &(int){1}, sizeof(int));
 
-    // Asociamos el socket a un puerto en especifico donde vamos a escuchar
-	if (bind(socket_servidor, servinfo->ai_addr, servinfo->ai_addrlen) == -1) {
-        log_error(logger, "Hubo un error al asociar el socket al puerto.");
-        close(socket_servidor);
-        freeaddrinfo(servinfo);
-        return -1;
-    }
+    // Asociamos el socket a un puerto
+    bind(socket_servidor, servinfo->ai_addr, servinfo->ai_addrlen);
 
-	// Ahora el socket queda esperando nuevas conexiones
-	if (listen(socket_servidor, SOMAXCONN) == -1) {
-        log_error(logger, "Hubo al escuchar en el puerto.");
-        close(socket_servidor);
-        freeaddrinfo(servinfo);
-        return -1;
-    }
+    // Asociamos el socket a un puerto
+    listen(socket_servidor, SOMAXCONN);
 
-	// Liberamos la memoria que pedimos con getaddrinfo
-	freeaddrinfo(servinfo);
-	printf("Escuchando por nuevos clientes en el puerto: %s\n", puerto);
+    // Escuchamos las conexiones entrantes
 
-	return socket_servidor;
+    freeaddrinfo(servinfo);
+    log_trace(logger, "Listo para escuchar a mi cliente");
+
+    return socket_servidor;
 }
 
 // (BLOQUEANTE) - Espera a la conexion de un cliente
