@@ -46,7 +46,7 @@ int main(int argc, char* argv[]) {
     int conexion_stick = crear_conexion(logger, ip, puerto_memory_stick);
     log_info(logger, "> Modulo CPU Conectado a Memory Stick");
 
-    CONEXION CLIENTE CON KERNEL MEMORY
+    // CONEXION CLIENTE CON KERNEL MEMORY
 	int conexion_memory = crear_conexion(logger, ip, puerto_kernel_memory);
     log_info(logger, "> Modulo CPU Conectado a Kernel Memory");
 
