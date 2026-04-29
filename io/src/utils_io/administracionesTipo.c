@@ -204,7 +204,36 @@ bool mandarRegresoTipoStdinAScheduler(int socket_scheduler, uint32_t pid, uint32
 
 void administrarIoTipoStdout(int socket_scheduler)
 {
+    if(mandarSolicitudAScheduler(socket_scheduler) == false)
+            return;
     while(1){
-        mandarSolicitudAScheduler(socket_scheduler);
+
+        t_paquete* paquete = recibir_paquete_de_scheduler(socket_scheduler, SOLICITUD_IO_STDOUT);
+        if(paquete == NULL)
+            return;
+
+        t_solicitud_io_stdout solicitud;
+        deserializarSolicitudIoStdout(paquete->buffer, &solicitud);
+
+        log_info(logger, "## PID: %d - Inicio de IO", solicitud.pid_proceso);
+        log_info(logger, "## PID: %d - %s", solicitud.pid_proceso, solicitud.cadena);
+        printf("%s\n", solicitud.cadena);
+        log_info(logger, "## PID: %d - Fin de IO", solicitud.pid_proceso);
+
+        if(mandarRegresoTipoStdoutAScheduler(socket_scheduler, solicitud.pid_proceso) == false)
+        {
+            eliminar_paquete(paquete);
+            return;
+        }
+
+        eliminar_paquete(paquete);
     }
+}
+
+bool mandarRegresoTipoStdoutAScheduler(int socket_scheduler, uint32_t pid)
+{
+    t_regreso_io_stdout regreso;
+    regreso.pid_proceso = pid;
+    t_paquete* paquete = armar_paquete(REGRESO_IO_STDOUT, &regreso);
+    return enviar_paquete_a_scheduler(socket_scheduler, paquete);
 }

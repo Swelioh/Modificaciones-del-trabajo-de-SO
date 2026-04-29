@@ -23,5 +23,5 @@ void rellenarCadenaConBarraCero(char* cadena, uint32_t tamanio);
 bool mandarRegresoTipoStdinAScheduler(int socket_scheduler, uint32_t pid, uint32_t largo, char* string);
 // Administracion tipo stdout
 void administrarIoTipoStdout(int socket_scheduler);
-
-#endif
+bool mandarRegresoTipoStdoutAScheduler(int socket_scheduler, uint32_t pid);
+#endif 
