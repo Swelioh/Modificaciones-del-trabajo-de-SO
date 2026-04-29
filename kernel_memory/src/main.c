@@ -2,13 +2,12 @@
 #include <utils_memory/inicializacion.h>
 #include <variables_globales/variables_globales.h>
 #include <serializacion/serializacion.h>
-#include <handlers/handler_cpu.h>
-#include <handlers/handler_kernel_scheduler.h>
+#include <handlers_kernel_memory/handler_cpu.h>
+#include <handlers_kernel_memory/handler_kernel_scheduler.h>
 #include <pthread.h>
 // TODO: armar un archivo .h para centralizar los includes
 
 int main(int argc, char* argv[]) {
-    pthread_t hilo;
 
     //TODO hacer atexit(funcitions); para que se ejecuten cuando se usa exit(asdasd);
     validar_argumentos(argc);
@@ -21,11 +20,13 @@ int main(int argc, char* argv[]) {
     int conexion_servidor = iniciar_servidor(logger, PUERTO_KERNEL_MEMORY);
 
 	while(1) {
+    	pthread_t hilo;
+
 		//Nos quedamos esperando a que se conecte algun modulo
 		int fd_cliente = esperar_cliente(conexion_servidor, logger);
 
 		//Handshake para saber quien se conecto
-        t_paquete* hs = recibir_paquete_completo(logger, fd_cliente);	// Se podria usar funcion: recibir_operacion que devuelve el cod_op nomas
+        t_paquete* hs = recibir_paquete_completo(fd_cliente);	// Se podria usar funcion: recibir_operacion que devuelve el cod_op nomas
         
 		//Validamos que pudimos recibir el handshake, sino continuamos con la siguiente iteracion del bucle
 		if (hs == NULL) { 
@@ -40,30 +41,38 @@ int main(int argc, char* argv[]) {
 		// Reservamos memoria para pasar ambos parámetros a los handlers
         t_args* args = malloc(sizeof(t_args));
         args->fd = fd_cliente;
-        args->conexion_servidor = conexion_servidor;//TODO: hace falta este parametro???
+
+		int hilo_creado = 0;
 
 		switch (tipo) {
 			case HANDSHAKE_KERNEL_SCHEDULER:
 				log_info(logger, "Se conectó el kernel scheduler...");
-				pthread_create(&hilo, NULL, (void*) handler_kernel_scheduler, args);
+				pthread_create(&hilo, NULL, handler_kernel_scheduler, args);
+				hilo_creado = 1;
 				break;
 			case HANDSHAKE_CPU:
 				log_info(logger, "Se conectó el CPU...");
-				pthread_create(&hilo, NULL, (void*) handler_cpu, args);
+				pthread_create(&hilo, NULL, handler_cpu, args);
+				hilo_creado = 1;
 				break;
             case HANDSHAKE_SWAP:
 				log_info(logger, "Se conectó el swap...");
 				// pthread_create(&hilo, NULL, (void*) handler_swap, args);
+				// hilo_creado = 1;
 				break;
 			case HANDSHAKE_MEMORY_STICK:
 				log_info(logger, "Se conectó el memory stick...");
 				// pthread_create(&hilo, NULL, (void*) handler_memory_stick, args);
+				// hilo_creado = 1;
 				break;
 			default:
 				log_warning(logger,"Operacion desconocida. No quieras meter la pata");
-				//TODO: ver donde liberar recursos, capaz es aca
+				close(fd_cliente);
 				break;
 		}
+
+		if(hilo_creado)
+			pthread_detach(hilo);
 	}
 
 	//TODO

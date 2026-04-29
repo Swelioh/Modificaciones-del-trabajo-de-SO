@@ -13,10 +13,8 @@
 #include<commons/string.h>
 
 // Cliente
-// int crear_conexion(t_log* logger, char* ip, char* puerto);//viejo
 int crear_conexion(t_log* logger, char* ip, char* puerto);
 // TODO: ESTE VA EN SCHEDULER
-// void manejar_desconexion(int fd_cliente, int tipo_cliente);
 void liberar_conexion(int socket_cliente);
 
 // Servidor

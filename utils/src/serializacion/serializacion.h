@@ -25,7 +25,7 @@ char *leer_string_del_buffer(t_buffer *buffer);
 // Funciones para enviar paquetes
 t_paquete* crear_paquete(op_code codigo);
 void eliminar_paquete(t_paquete* paquete);
-t_paquete* recibir_paquete_completo(t_log* logger, int socket);
+t_paquete* recibir_paquete_completo(int socket);
 t_paquete* armar_paquete(op_code codigo, void* struct_con_mensaje);
 void enviar_paquete(t_paquete* paquete, int socket_cliente);
 

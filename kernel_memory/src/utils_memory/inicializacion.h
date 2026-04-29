@@ -13,7 +13,6 @@ void liberar_recursos(t_log* logger_kernel_memory,t_config* config_kernel_memory
 
 typedef struct {
     int fd;
-    int conexion_servidor;
 } t_args;
 
 #endif

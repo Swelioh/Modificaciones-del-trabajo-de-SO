@@ -11,6 +11,7 @@ void crear_buffer(t_paquete* paquete)
 	paquete->buffer = malloc(sizeof(t_buffer));
 	paquete->buffer->size = 0;
 	paquete->buffer->stream = NULL;
+	paquete->buffer->offset = 0;
 }
 
 void agregar_uint32_al_buffer(t_buffer *buffer, uint32_t variable)
@@ -124,7 +125,7 @@ void eliminar_paquete(t_paquete* paquete)
 	free(paquete);
 }
 
-t_paquete* recibir_paquete_completo(t_log* logger, int socket) {
+t_paquete* recibir_paquete_completo(int socket) {
 
 	//Reservamos memoria para el paquete a recibir
     t_paquete* paquete = malloc(sizeof(t_paquete));
@@ -147,7 +148,6 @@ t_paquete* recibir_paquete_completo(t_log* logger, int socket) {
         return NULL;
     }
 
-    // TODO: agregar validación para que reciba solo el cod de operación si es que el buffer llega vacío
     if (paquete->buffer->size == 0) {
         return paquete;
     }
