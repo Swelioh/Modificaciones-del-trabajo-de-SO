@@ -17,3 +17,26 @@ char* PUERTO_KERNEL_SCHEDULER; //Puerto que utiliza el scheduler como servidor
 
 //Logger
 t_log* logger;
+
+// **************************************************
+//          Variables relacionadas a CPU
+// **************************************************
+
+// Lista global de recursos de CPU
+t_list* cpus_conectadas;
+
+// Lista global de recursos de CPU
+pthread_mutex_t mutex_lista_cpus;
+
+//CPUs para usar
+sem_t cpu_disponible;
+//Cpus Tomadas    
+sem_t cpu_tomadas;  
+
+// **************************************************
+//          Variables relacionadas a IO
+// **************************************************
+t_queue* tareas_io_pendientes[3];
+sem_t semaforo_tareas_io_pendientes[3];
+pthread_mutex_t mutex_lista_tareas_io[3]; 
+

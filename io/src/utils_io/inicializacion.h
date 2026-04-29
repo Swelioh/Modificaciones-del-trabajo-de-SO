@@ -1,23 +1,21 @@
-#ifndef SCHEDULER_INIT_H_
-#define SCHEDULER_INIT_H_
+#ifndef IO_INIT_H_
+#define IO_INIT_H_
 
-#include <utils/utils.h> //Para usar funciones para crear servidores
-#include<pthread.h> //Para crear hilos
+#include <utils/utils.h> //Para usar funciones para conectarme a un servidor
 #include "variablesGlobales.h"
 #include <serializacion/estructuras.h>
 #include <serializacion/serializacion.h>
 #include <variables_globales/variables_globales.h>
 
-
 // *********************************************
 //              PROTOTIPOS
 // *********************************************
 void validarArgumentos (int cantidadArgumentos);
-void inicializarModulo(char* pathConfig);
-int iniciarConexionKernelMemory(t_log* logger, char* ip_memory, char* puerto);
+void inicializarModulo(char* pathConfig, char* tipo);
+int iniciarConexionKernelScheduler(t_log* logger);
+void enviarIngresoAScheduler(int socket_scheduler);
 void liberarModulo(t_log* logger_a_destruir,t_config* config_a_destruir);
 
+t_tipos_io tipo_io_string_a_enum(char* tipo);
 
-void crear_proceso(char* path, int prioridad);
-void procesar_fin(int pid);
 #endif
