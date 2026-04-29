@@ -117,7 +117,6 @@ int esperar_cliente(int socket_servidor, t_log * logger)
 	return socket_cliente;
 }
 
-
 int recibir_operacion(int socket_cliente)
 {
 	int cod_op;
@@ -133,6 +132,7 @@ int recibir_operacion(int socket_cliente)
 // ********************************************************************************
 //                   FUNCIONES PARA ARCHIVOS DE CONFIGURACION
 // ********************************************************************************
+
 t_config* abrirConfig(char* pathAlConfig)
 {
 	t_config* config = config_create(pathAlConfig);

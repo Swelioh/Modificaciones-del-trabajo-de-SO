@@ -10,7 +10,7 @@ void liberar_recursos(t_log* logger, t_config* config, int conexion_scheduler, i
 }
 
 int main(int argc, char* argv[]) {
-    t_log* logger = log_create("modulo_io.log", "modulo_io", 1, LOG_LEVEL_TRACE);
+    t_log* logger = log_create("modulo_cpu.log", "modulo_cpu", 1, LOG_LEVEL_TRACE);
 
     char* ip;
     char* puerto_kernel_scheduler;

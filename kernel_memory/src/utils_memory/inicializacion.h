@@ -10,6 +10,9 @@
 void validar_argumentos (int cantidadArgumentos);
 void inicializar_modulo(char* pathConfig);
 void liberar_recursos(t_log* logger_kernel_memory,t_config* config_kernel_memory);
+
+typedef struct {
+    int fd;
+} t_args;
+
 #endif
-
-

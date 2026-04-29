@@ -1,32 +1,17 @@
 #include "estructuras.h"
 #include "serializacion.h"
 
-
 // ********************************************************************************
 //                             MISC
 // *********************************************************************************
 
-// Crea la estructura del paquete que se va a enviar (Codigo de operacion + Buffer)
-t_paquete* crear_paquete(op_code codigo)
-{
-	t_paquete* paquete = malloc(sizeof(t_paquete));
-	paquete->codigo_operacion = codigo;
-	crear_buffer(paquete);
-	return paquete;
-}
 // Crea el buffer que va a contener la informacion que se quiere enviar (El payload)
 void crear_buffer(t_paquete* paquete)
 {
 	paquete->buffer = malloc(sizeof(t_buffer));
 	paquete->buffer->size = 0;
 	paquete->buffer->stream = NULL;
-}
-// Me libera toda la memoria que pedi para armar el paquete
-void eliminar_paquete(t_paquete* paquete)
-{
-	free(paquete->buffer->stream);
-	free(paquete->buffer);
-	free(paquete);
+	paquete->buffer->offset = 0;
 }
 
 void agregar_uint32_al_buffer(t_buffer *buffer, uint32_t variable)
@@ -38,6 +23,7 @@ void agregar_uint32_al_buffer(t_buffer *buffer, uint32_t variable)
 	// actualizo el tamanio total del buffer
 	buffer->size += sizeof(uint32_t);
 }
+
 // Lee un uint32 del buffer y me adelanta el offset del buffer
 uint32_t leer_uint32_del_buffer(t_buffer *buffer)
 {
@@ -58,6 +44,7 @@ void agregar_int32_al_buffer(t_buffer *buffer, int32_t variable)
 	// actualizo el tamanio total del buffer
 	buffer->size += sizeof(int32_t);
 }
+
 // Lee un int32 del buffer y me adelanta el offset del buffer
 int32_t leer_int32_del_buffer(t_buffer *buffer)
 {
@@ -78,6 +65,7 @@ void agregar_uint8_al_buffer(t_buffer *buffer, uint8_t variable)
 	// actualizo el tamanio total del buffer
 	buffer->size += sizeof(uint8_t);
 }
+
 // Lee un uint8 del buffer y me adelanta el offset del buffer
 uint8_t leer_uint8_del_buffer(t_buffer *buffer)
 {
@@ -101,6 +89,7 @@ void agregar_string_al_buffer(t_buffer *buffer, uint32_t largo_string, char *str
 	// actualizo el tamanio total del buffer
 	buffer->size += (largo_string + 1);
 }
+
 // Lee el string del buffer. LUEGO HAY QUE LIBERAR LA MEMORIA DEL STRING
 char *leer_string_del_buffer(t_buffer *buffer)
 {
@@ -113,10 +102,69 @@ char *leer_string_del_buffer(t_buffer *buffer)
 	return string;
 }
 
-
 // ********************************************************************************
-//                           FUNCIONES PARA MANDAR PAQUETES
+//                           FUNCIONES PARA MANEJAR PAQUETES
 // *********************************************************************************
+
+// Crea la estructura del paquete que se va a enviar (Codigo de operacion + Buffer)
+t_paquete* crear_paquete(op_code codigo)
+{
+	t_paquete* paquete = malloc(sizeof(t_paquete));
+	paquete->codigo_operacion = codigo;
+	crear_buffer(paquete);
+	return paquete;
+}
+
+// Me libera toda la memoria que pedi para armar el paquete
+void eliminar_paquete(t_paquete* paquete)
+{
+	if (paquete->buffer->stream != NULL) 
+		free(paquete->buffer->stream);
+
+	free(paquete->buffer);
+	free(paquete);
+}
+
+t_paquete* recibir_paquete_completo(int socket) {
+
+	//Reservamos memoria para el paquete a recibir
+    t_paquete* paquete = malloc(sizeof(t_paquete));
+    paquete->buffer = malloc(sizeof(t_buffer));
+
+    //Inicializamos offset
+    paquete->buffer->offset = 0;
+
+    //Recibimos el codigo de operacion, validamos que no devuelva <= 0 porque indicaria un error en recv
+    if (recv(socket, &(paquete->codigo_operacion), sizeof(uint32_t), 0) <= 0) {
+        free(paquete->buffer);
+        free(paquete);
+        return NULL;
+    }
+
+    //Recibimos tamaño del buffer
+    if (recv(socket, &(paquete->buffer->size), sizeof(uint32_t), 0) <= 0) {
+        free(paquete->buffer);
+        free(paquete);
+        return NULL;
+    }
+
+    if (paquete->buffer->size == 0) {
+        return paquete;
+    }
+
+    //Reservamos memoria para el payload
+    paquete->buffer->stream = malloc(paquete->buffer->size);
+
+    //Recibimos el payload completo
+    if (recv(socket, paquete->buffer->stream, paquete->buffer->size, 0) <= 0) {
+        free(paquete->buffer->stream);
+        free(paquete->buffer);
+        free(paquete);
+        return NULL;
+    }
+
+    return paquete;
+}
 
 // Esta funcion deja el paquete listo para enviar por el socket. Le pasas el operation code y luego la direccion de la estructura de datos que contiene la informacion que queres enviar.
 t_paquete* armar_paquete(op_code codigo, void* struct_con_mensaje)
@@ -137,21 +185,6 @@ t_paquete* armar_paquete(op_code codigo, void* struct_con_mensaje)
 	return paquete;
 }
 
-void* serializar_paquete(t_paquete* paquete, int bytes)
-{
-	void * magic = malloc(bytes);
-	int desplazamiento = 0;
-
-	memcpy(magic + desplazamiento, &(paquete->codigo_operacion), sizeof(int));
-	desplazamiento+= sizeof(int);
-	memcpy(magic + desplazamiento, &(paquete->buffer->size), sizeof(int));
-	desplazamiento+= sizeof(int);
-	memcpy(magic + desplazamiento, paquete->buffer->stream, paquete->buffer->size);
-	desplazamiento+= paquete->buffer->size;
-
-	return magic;
-}
-
 void enviar_paquete(t_paquete* paquete, int socket_cliente)
 {
 	int bytes = paquete->buffer->size + 2*sizeof(int);
@@ -167,10 +200,30 @@ void enviar_paquete(t_paquete* paquete, int socket_cliente)
 //           FUNCIONES DE SERIALIACION Y DESERIALIZACION DE PAQUETES
 // *********************************************************************************
 
+void* serializar_paquete(t_paquete* paquete, int bytes)
+{
+    void * magic = malloc(bytes);
+    int desplazamiento = 0;
+
+    memcpy(magic + desplazamiento, &(paquete->codigo_operacion), sizeof(int));
+    desplazamiento+= sizeof(int);
+    memcpy(magic + desplazamiento, &(paquete->buffer->size), sizeof(int));
+    desplazamiento+= sizeof(int);
+
+    //Solamente si tenemos un buffer que enviar lo agregamos en la serializacion
+    if (paquete->buffer->size > 0) {
+        memcpy(magic + desplazamiento, paquete->buffer->stream, paquete->buffer->size);
+        desplazamiento+= paquete->buffer->size;
+    }
+
+    return magic;
+}
+
 void serializarIngresoCPU(t_buffer *buffer, t_ingreso_cpu struct_a_serializar)
 {
 	agregar_uint32_al_buffer(buffer, struct_a_serializar.id_cpu);
 }
+
 void deserializarIngresoCPU(t_buffer *buffer, t_ingreso_cpu* struct_donde_deserializo)
 {
 	struct_donde_deserializo->id_cpu = leer_uint32_del_buffer(buffer);
