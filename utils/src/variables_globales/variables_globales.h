@@ -10,8 +10,8 @@ typedef enum {
 
     OP_CREAR_PROCESO = 10,
     OP_FIN_PROCESO = 11,
-    OP_SYSCALL     = 11,
-    OP_INTERRUPCION= 12,
+    OP_SYSCALL     = 12,
+    OP_INTERRUPCION= 13,
 
     OP_IO_FIN      = 20,
 

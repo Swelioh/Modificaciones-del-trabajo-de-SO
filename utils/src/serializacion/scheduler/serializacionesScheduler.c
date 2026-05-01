@@ -74,3 +74,15 @@ void deserializarRegresoIOStdout(t_buffer *buffer, t_regreso_io_stdout* struct_d
 {
 	struct_donde_deserializo->pid_proceso = leer_uint32_del_buffer(buffer);
 }
+
+// Mensaje que envia SCHEDULER a IO indicando la cadena a imprimir
+void serializarSolicitudIoStdout(t_buffer *buffer, t_solicitud_io_stdout struct_a_serializar)
+{
+    agregar_uint32_al_buffer(buffer, struct_a_serializar.pid_proceso);
+    agregar_string_al_buffer(buffer, struct_a_serializar.largo_cadena, struct_a_serializar.cadena);
+}
+void deserializarSolicitudIoStdout(t_buffer *buffer, t_solicitud_io_stdout* struct_donde_deserializo)
+{
+    struct_donde_deserializo->pid_proceso = leer_uint32_del_buffer(buffer);
+    struct_donde_deserializo->cadena = leer_string_del_buffer(buffer);
+}

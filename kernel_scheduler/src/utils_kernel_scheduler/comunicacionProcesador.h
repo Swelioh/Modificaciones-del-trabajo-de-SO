@@ -12,17 +12,20 @@
 // ************************************************************************
 
 // Estructura que tiene los argumentos para poder crear el hilo que maneja la conexion con la CPU. Tambien Van a ser las estrcuturas para administralos
-typedef struct {
+/*typedef struct {
     int socket_cpu;
     t_ingreso_cpu info_cpu;
 } t_handler_cpu;
+*/
+
+typedef struct {
+    int socket_cpu;
+    t_buffer* buffer;
+} t_args_handler_cpu;
 
 // ************************************************************************
 //                            PROTOTIPOS
 // ************************************************************************
-
-// Esta es la funcion que recibe el mensaje de ingreso de una CPU y se encarga de crear el hilo para manejar su comunicacion
-void iniciarCpu(int socket_cpu, t_buffer* buffer);
 
 // Funcion que administra la comunicacion con la CPU (Corre en un hilo)
 void* handlerCPU(void* argumentos);

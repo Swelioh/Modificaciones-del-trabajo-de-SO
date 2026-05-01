@@ -1,38 +1,73 @@
 #include "comunicacionProcesador.h"
 
-void iniciarCpu(int socket_cpu, t_buffer* buffer)
-{
-    // Creo la estructura donde deserializo el mensaje
-    t_ingreso_cpu mensaje_ingreso;
-    deserializarIngresoCPU(buffer, &mensaje_ingreso);
 
-    // Creo la estructura que va a almacenar los argumentos que se pasan a la funcion del p_thread
-    t_handler_cpu* args = malloc(sizeof(t_handler_cpu));
-    args->socket_cpu = socket_cpu;
-    args->info_cpu = mensaje_ingreso;
-
-    // TODO: Yo no crearia una lista con el mismo tipo del mensaje de ingreso, conviene tener una estructura dedicada para administrar las CPUs disponibles
-    pthread_mutex_lock(&mutex_lista_cpus);
-    list_add(cpus_conectadas, args);
-    pthread_mutex_unlock(&mutex_lista_cpus);
-    sem_post(&cpu_disponible);
-
-    pthread_t hilo;
-    pthread_create(&hilo, NULL, handlerCPU, args);
-    pthread_detach(hilo);
-}
-
-void* handlerCPU(void* argumentos){
-    // Casteo el void* a la estructura que guarda los argumentos
-    t_handler_cpu* args = (t_handler_cpu*) argumentos;
-
-    // Me quedo con los datos que necesito y libero la memoria que habia pedido para almacenar los argumentos
-    int socketCpu = args->socket_cpu;
-    t_ingreso_cpu info_cpu = args->info_cpu;
+void* handlerCPU(void* argumentos) {
+    t_args_handler_cpu* args = (t_args_handler_cpu*) argumentos;
+    int socket_cpu           = args->socket_cpu;
+    t_buffer* buffer         = args->buffer;
     free(args);
 
-    // TODO: Administrar la CPU
+    // Deserializo el handshake con el buffer que ya vino del main
+    t_ingreso_cpu info_cpu;
+    deserializarIngresoCPU(buffer, &info_cpu);
+
     log_info(logger, "## CPU %d Conectada", info_cpu.identificador_cpu); //LOG_OBLIGATORIO
+
+    /*pthread_mutex_lock(&mutex_lista_cpus);
+    list_add(cpus_conectadas, info_cpu);
+    pthread_mutex_unlock(&mutex_lista_cpus);*/
+
+    sem_post(&cpu_disponible);
+
+    // Ciclo principal: atender syscalls de esta CPU
+    while(1) {
+        t_paquete* paquete = recibir_paquete_completo(socket_cpu);
+        if(paquete == NULL) {
+            // La CPU se desconecto
+            log_debug(logger, "CPU %d desconectada.", info_cpu.identificador_cpu);
+            close(socket_cpu);
+            return NULL;
+        }
+
+        switch(paquete->codigo_operacion) {
+            case OP_CREAR_PROCESO: {
+                //t_syscall_crear_proceso syscall;
+                //deserializarSyscallCrearProceso(paquete->buffer, &syscall);
+                //log_info(logger, "## (%d) - Solicitó syscall: CREAR_PROCESO", pid_proceso); //LOG_OBLIGATORIO
+                // El proceso pasa de EXEC a BLOCK
+                // TODO: moverlo a la cola de BLOCK y enviarselo al modulo IO correspondiente
+                break;
+            }
+            case OP_FIN_PROCESO: {
+                //t_syscall_fin_proceso syscall;
+                //deserializarSyscallFinProceso(paquete->buffer, &syscall);
+                //log_info(logger, "## (%d) - Solicitó syscall: FIN_PROCESO", pid_proceso); //LOG_OBLIGATORIO
+                // El proceso pasa de EXEC a BLOCK
+                // TODO: moverlo a la cola de BLOCK y enviarselo al modulo IO de tipo STDIN
+                break;
+            }
+            case OP_SYSCALL: {
+                //t_syscall_io_stdout syscall;
+                //deserializarSyscallIoStdout(paquete->buffer, &syscall);
+                //log_info(logger, "## (%d) - Solicitó syscall: STDOUT", pid_proceso); //LOG_OBLIGATORIO
+                // El proceso pasa de EXEC a BLOCK
+                // TODO: pedirle los bytes al Kernel Memory y enviarselos al modulo IO de tipo STDOUT
+                break;
+            }
+            case OP_INTERRUPCION: {
+                //t_syscall_interrupcion syscall;
+                //deserializarSyscallInterrupcion(paquete->buffer, &syscall);
+                //log_info(logger, "## (%d) - Solicitó syscall: INTERRUPCION", pid_proceso); //LOG_OBLIGATORIO
+                // TODO: crear el mutex si no existe
+                break;
+            }
+            default:
+                log_warning(logger, "Codigo de operacion desconocido recibido de CPU %d", info_cpu.identificador_cpu);
+                break;
+        }
+
+        eliminar_paquete(paquete);
+    }
 
     return NULL;
 }

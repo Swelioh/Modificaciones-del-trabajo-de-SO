@@ -37,7 +37,11 @@ typedef struct {;
     int32_t  largo_cadena;
 	char* cadena;
 } t_regreso_io_stdin; //Modeliza el mensaje que envia IO a SCHEDULER indicando que se termino la operacion de STDIN
-
+typedef struct {
+    uint32_t pid_proceso;
+    uint32_t largo_cadena;
+    char* cadena;
+} t_solicitud_io_stdout;
 typedef struct {;   
 	uint32_t pid_proceso;
 } t_regreso_io_stdout; //Modeliza el mensaje que envia IO a SCHEDULER indicando que se termino la operacion de STDOUT
@@ -76,5 +80,7 @@ void deserializarRegresoIOStdin(t_buffer *buffer, t_regreso_io_stdin* struct_don
 
 void serializarRegresoIOStdout(t_buffer *buffer, t_regreso_io_stdout struct_a_serializar);
 void deserializarRegresoIOStdout(t_buffer *buffer, t_regreso_io_stdout* struct_donde_deserializo);
+void serializarSolicitudIoStdout(t_buffer *buffer, t_solicitud_io_stdout struct_a_serializar);
+void deserializarSolicitudIoStdout(t_buffer *buffer, t_solicitud_io_stdout* struct_donde_deserializo);
 
 #endif

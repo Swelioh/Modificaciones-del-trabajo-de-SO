@@ -8,6 +8,8 @@ int main(int argc, char* argv[]) {
 
     inicializarModulo(argv[1]);
 
+    signal(SIGINT, manejar_sigint);
+
 	log_info(logger, "IP: %s", IP_KERNEL_MEMORY);
 	log_info(logger, "PUERTO_KERNEL_MEMORY: %s", PUERTO_KERNEL_MEMORY);
     log_info(logger, "> Kernel Scheduler Listo");
@@ -17,7 +19,9 @@ int main(int argc, char* argv[]) {
     //Iniciamos servidor para escuchar conexiones de CPU e IO
 	int socket_servidor = iniciar_servidor(logger, PUERTO_KERNEL_SCHEDULER);
 
-    while (1) {
+    pthread_t hilo;
+
+    while (seguir_ejecutando) {
         // Esperamos a que se conecte un cliente
         int fd_cliente = esperar_cliente(socket_servidor, logger);
 
@@ -30,17 +34,25 @@ int main(int argc, char* argv[]) {
         }
         
         // Dependiendo que modulo sea creo un hilo para atenderlo
-        switch (paquete->codigo_operacion) {
+         switch (paquete->codigo_operacion) {
             case INGRESO_CPU:
-                iniciarCpu(fd_cliente, paquete->buffer);
+                t_args_handler_cpu* args = malloc(sizeof(t_args_handler_cpu));
+                args->socket_cpu = fd_cliente;
+                args->buffer  = paquete->buffer;
+                pthread_create(&hilo, NULL, handlerCPU, args);
+                pthread_detach(hilo);
                 break;
+            
             case INGRESO_IO:
                 iniciarIO(fd_cliente, paquete->buffer);
                 break;
             default:
-                log_warning(logger,"Operacion desconocida. No quieras meter la pata");
+                log_warning(logger, "Operacion desconocida. No quieras meter la pata");
                 break;
-		}
+        }
+
+        eliminar_paquete(paquete);
+    
 
         // Libero la memoria que se habia pedido para almacenar el paquete
         if(paquete != NULL)
@@ -50,6 +62,15 @@ int main(int argc, char* argv[]) {
     // Liberar recursos TODO!!! Cada Hilo maneja su desconexion.
     /*liberar_conexion(conexion);
     liberar_conexion(conexion_servidor);*/
-    liberarModulo(logger, config);
+    
     return 0;
+}
+
+// ================== SIGNAL HANDLER ==================
+
+void manejar_sigint(int senial) {
+    seguir_ejecutando = 0;
+
+    close(socket_servidor);
+    liberarModulo(logger, config);
 }
