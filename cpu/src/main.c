@@ -1,12 +1,4 @@
-#include <utils/utils.h>
-#include <stdint.h> // Necesario para uint32_t y uint8_t
-
-typedef struct {
-    uint32_t PC;  // Program Counter 
-    uint8_t AX, BX, CX, DX; // Registros de 1 byte 
-    uint32_t EAX, EBX, ECX, EDX; // Registros de 4 bytes 
-    uint32_t SI, DI; // Registros de dirección 
-} t_registros;
+#include "../utils.h"
 
 void liberar_recursos(t_log* logger, t_config* config, int conexion_scheduler, int conexion_stick, int conexion_memory)
 {
@@ -76,24 +68,30 @@ int main(int argc, char* argv[]) {
 while (1) {
     log_info(logger, "CPU esperando proceso del Kernel...");
     
-    // 1. La CPU se bloquea acá hasta que el Kernel mande algo
+    // La CPU se bloquea acá hasta que el Kernel mande algo
     int cod_op = recibir_operacion(conexion_scheduler);
     
     switch (cod_op) {
         case NUEVO_PROCESO:
-            // 2. Sabemos que nos mandaron un PID, lo leemos
+            //  nos mandaron un PID, lo leemos
             pid_actual = recibir_pid(conexion_scheduler);
             log_info(logger, "El Kernel me asignó el PID: %d", pid_actual);
             
-            // TODO: Acá pedirías el Contexto a la Memoria
+            // el Contexto a la Memoria
             solicitar_contexto_a_memoria(conexion_memory, pid_actual);
 
             registros = recibir_contexto(conexion_memory);
             log_info(logger, "Contexto recibido. PC inicial: %d", registros.PC);
-            // TODO: Acá arranca tu while(procesando) { Fetch, Decode, Execute... }
+            // TODO: Acá arranca while(procesando) { Fetch, Decode, Execute... }
             procesando = true;
             while(procesando) {
-            // ... Acá va tu código de Fetch, Decode y Execute ...
+                
+                //FETCH
+               char* instruccion_proxima = fetch_instruccion(conexion_memory, pid_actual, registros.PC);
+                
+                log_info(logger, "## PID: %d - FETCH - Program Counter: %d", pid_actual, registros.PC);
+                
+
             }
 
             break;

@@ -1,4 +1,4 @@
-#include <utils.h>
+#include "utils.h"
 
 int recibir_operacion(int socket_cliente) {
     int cod_op;
@@ -50,4 +50,35 @@ t_registros recibir_contexto(int socket_memoria) {
     recv(socket_memoria, &registros_recibidos, size, MSG_WAITALL);
 
     return registros_recibidos;
+}
+
+
+char* fetch_instruccion(int socket_memoria, int pid, uint32_t pc) {
+    op_code codigo = PEDIR_INSTRUCCION;
+    
+    // El payload son 2 cosas: PID (4 bytes) + PC (4 bytes)
+    uint32_t size_payload = sizeof(int) + sizeof(uint32_t); 
+
+    // petición a Memoria
+    send(socket_memoria, &codigo, sizeof(op_code), 0);
+    send(socket_memoria, &size_payload, sizeof(uint32_t), 0);
+    send(socket_memoria, &pid, sizeof(int), 0);
+    send(socket_memoria, &pc, sizeof(uint32_t), 0);
+
+    // Espera respuesta
+    int cod_op_recibido;
+    uint32_t size_instruccion;
+    
+    // Leemos el codigo y el tamaño del string que nos va a llegar
+    recv(socket_memoria, &cod_op_recibido, sizeof(int), MSG_WAITALL);
+    recv(socket_memoria, &size_instruccion, sizeof(uint32_t), MSG_WAITALL);
+
+    // 3. Reservamos memoria exacta para el string + 1 byte para el centinela '\0'
+    char* instruccion = malloc(size_instruccion + 1);
+    
+    // Leemos el texto crudo
+    recv(socket_memoria, instruccion, size_instruccion, MSG_WAITALL);
+    instruccion[size_instruccion] = '\0'; // Aseguramos que C lo lea como un string válido
+
+    return instruccion;
 }
