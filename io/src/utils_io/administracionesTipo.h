@@ -4,6 +4,8 @@
 #include "variablesGlobales.h" //Para los loggers
 #include <serializacion/estructuras.h>
 #include <serializacion/serializacion.h>
+#include <commons/string.h>
+#include <serializacion/scheduler_io/serializacionesScheduler_Io.h> // Para saber serializar y deserializar paquetes
 
 // *********************************************
 //              PROTOTIPOS

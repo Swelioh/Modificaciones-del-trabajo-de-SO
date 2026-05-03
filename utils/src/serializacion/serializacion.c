@@ -122,6 +122,8 @@ void eliminar_paquete(t_paquete* paquete)
 	free(paquete);
 }
 
+// Funcion que recibe el paquete completo
+// En caso de que algun recv de -1 libera el paquete y devuelve NULL. Caso contrario devuelve un puntero al paquete con la informacion (HAY QUE LIBERARLO DESPUES)
 t_paquete* recibir_paquete_completo(int socket) {
 
 	//Reservamos memoria para el paquete a recibir
@@ -145,6 +147,7 @@ t_paquete* recibir_paquete_completo(int socket) {
         return NULL;
     }
 
+	// Si el tamanio del buffer es 0 no hay que hacer un recv para el buffer (porque no existe), entonces devolvemos el paquete solo con el codigo de operacion
     if (paquete->buffer->size == 0) {
         return paquete;
     }
@@ -163,51 +166,10 @@ t_paquete* recibir_paquete_completo(int socket) {
     return paquete;
 }
 
-// Esta funcion deja el paquete listo para enviar por el socket. Le pasas el operation code y luego la direccion de la estructura de datos que contiene la informacion que queres enviar.
-t_paquete* armar_paquete(codigo_operacion codigo, void* struct_con_mensaje)
-{
-	t_paquete* paquete = crear_paquete(codigo);
-	t_buffer* buffer = paquete -> buffer;
-	buffer->offset = 0; //Lo inicializamos en 0 porque si no puede tener cualquier valor
-
-	// Segun el codigo de operacion serializas el mensaje casteando tu estructura de datos a la correcta para ese mensaje que queres enviar
-	switch(codigo)
-	{
-		case INGRESO_CPU:
-			serializarIngresoCPU(buffer, *((t_ingreso_cpu*) struct_con_mensaje));
-			break;
-		case INGRESO_IO:
-			serializarIngresoIO(buffer, *((t_ingreso_io*) struct_con_mensaje));
-			break;
-		case A_LA_ESPERA_IO:
-			// Solo mandamos el codigo, por lo que no hace falta serializar ningun buffer
-			break;
-		case SOLICITUD_IO_SLEEP:
-			serializarSolicitudIoSleep(buffer, *((t_solicitud_io_sleep*) struct_con_mensaje));
-			break;
-		case REGRESO_IO_SLEEP:
-			serializarRegresoIOSleep(buffer, *((t_regreso_io_sleep*) struct_con_mensaje));
-			break;
-		case SOLICITUD_IO_STDIN:
-			serializarSolicitudIoStdin(buffer, *((t_solicitud_io_stdin*) struct_con_mensaje));
-			break;
-		case REGRESO_IO_STDIN:
-			serializarRegresoIOStdin(buffer, *((t_regreso_io_stdin*) struct_con_mensaje));
-			break;
-		case REGRESO_IO_STDOUT:
-			serializarRegresoIOStdout(buffer, *((t_regreso_io_stdout*) struct_con_mensaje));
-			break;
-		default:
-			printf("No se reconoce el codigo de operacion.");
-			break;
-	}
-	return paquete;
-}
-
 // Envia paquete al socket que se pasa por parametro, devuelve la cantidad de bytes enviados
 int enviar_paquete(t_paquete* paquete, int socket_cliente)
 {
-	int bytes = paquete->buffer->size + 2*sizeof(int);
+	int bytes = paquete->buffer->size + 2*sizeof(uint32_t);
 	void* a_enviar = serializar_paquete(paquete, bytes);
 
 	int cant_bytes_enviados = send(socket_cliente, a_enviar, bytes, MSG_NOSIGNAL); // Ponemos el Flag de MSG no signal para que asi si se hace send a un socket que fue cerrado el SO no nos mate el proceso. Asi nosotros podemos trabajar ese error

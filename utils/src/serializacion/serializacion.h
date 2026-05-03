@@ -8,11 +8,8 @@
 #include<sys/socket.h>
 #include<netdb.h>
 #include<string.h>
-#include<commons/string.h>
-#include<commons/log.h>
 #include<variables_globales/variables_globales.h> // Para tener los codigos de operacion
-#include <serializacion/scheduler/serializacionesScheduler.h> // Para conocer las estructuras y funciones de serializacion y deseralizacion de los mensajes
-#include"estructuras.h"
+#include"estructuras.h" // Para asi saber que es un paquete o un buffer
 
 // MISCS ---------------------------------------------------------------------------
 void crear_buffer(t_paquete* paquete);
@@ -29,7 +26,6 @@ char *leer_string_del_buffer(t_buffer *buffer);
 t_paquete* crear_paquete(codigo_operacion codigo);
 void eliminar_paquete(t_paquete* paquete);
 t_paquete* recibir_paquete_completo(int socket);
-t_paquete* armar_paquete(codigo_operacion codigo, void* struct_con_mensaje);
 int enviar_paquete(t_paquete* paquete, int socket_cliente);
 
 // Funciones para serializar y deserializar

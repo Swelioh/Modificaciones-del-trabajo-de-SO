@@ -1,14 +1,42 @@
-#include "serializacionesScheduler.h"
+#include "serializacionesScheduler_Io.h"
 
-// Mensaje que envia CPU al SCHEDULER avisando que se dispone de una CPU nueva para el procesamiento de datos
-void serializarIngresoCPU(t_buffer *buffer, t_ingreso_cpu struct_a_serializar)
+// Esta funcion deja el paquete listo para enviar por el socket. Le pasas el operation code y luego la direccion de la estructura de datos que contiene la informacion que queres enviar.
+t_paquete* armar_paquete_scheduler_io(codigo_operacion codigo, void* struct_con_mensaje)
 {
-	agregar_uint32_al_buffer(buffer, struct_a_serializar.identificador_cpu);
+	t_paquete* paquete = crear_paquete(codigo);
+	t_buffer* buffer = paquete -> buffer;
+
+	// Segun el codigo de operacion serializas el mensaje casteando tu estructura de datos a la correcta para ese mensaje que queres enviar
+	switch(codigo)
+	{
+		case HANDSHAKE_IO:
+			serializarIngresoIO(buffer, *((t_ingreso_io*) struct_con_mensaje));
+			break;
+		case A_LA_ESPERA_IO:
+			// Solo mandamos el codigo, por lo que no hace falta serializar ningun buffer
+			break;
+		case SOLICITUD_IO_SLEEP:
+			serializarSolicitudIoSleep(buffer, *((t_solicitud_io_sleep*) struct_con_mensaje));
+			break;
+		case REGRESO_IO_SLEEP:
+			serializarRegresoIOSleep(buffer, *((t_regreso_io_sleep*) struct_con_mensaje));
+			break;
+		case SOLICITUD_IO_STDIN:
+			serializarSolicitudIoStdin(buffer, *((t_solicitud_io_stdin*) struct_con_mensaje));
+			break;
+		case REGRESO_IO_STDIN:
+			serializarRegresoIOStdin(buffer, *((t_regreso_io_stdin*) struct_con_mensaje));
+			break;
+		case REGRESO_IO_STDOUT:
+			serializarRegresoIOStdout(buffer, *((t_regreso_io_stdout*) struct_con_mensaje));
+			break;
+		default:
+			printf("No se reconoce el codigo de operacion.");
+			break;
+	}
+	return paquete;
 }
-void deserializarIngresoCPU(t_buffer *buffer, t_ingreso_cpu* struct_donde_deserializo)
-{
-	struct_donde_deserializo->identificador_cpu = leer_uint32_del_buffer(buffer);
-}
+
 
 // Mensaje que envia IO al SCHEDULER avisando que tipo de modulo fue el que se conecto
 void serializarIngresoIO(t_buffer *buffer, t_ingreso_io struct_a_serializar)

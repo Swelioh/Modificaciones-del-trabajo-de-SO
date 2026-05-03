@@ -4,8 +4,7 @@
 #include <commons/log.h>
 #include <commons/config.h>
 #include <unistd.h>
-#include <serializacion/estructuras.h>
-#include <serializacion/serializacion.h>
+#include <serializacion/scheduler_io/serializacionesScheduler_Io.h> // Para conocer el enum de tipos de IO
 
 // **************************************************
 //            Variables globales generales
