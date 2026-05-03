@@ -18,20 +18,31 @@ char* PUERTO_KERNEL_SCHEDULER; //Puerto que utiliza el scheduler como servidor
 //Logger
 t_log* logger;
 
+// Variable que almacena el FD que tiene el scheduler como servidor
+int socket_scheduler;
+
+volatile sig_atomic_t seguir_ejecutando = 1;
+
+listaEstados listaEstadosNew;
+listaEstados listaEstadosReady;
+
+sem_t semaforo_hay_propuestas_pcb;
+sem_t semaforo_hay_pcb_ready;
+
 // **************************************************
 //          Variables relacionadas a CPU
 // **************************************************
 
+// CPUs para usar
+sem_t cpu_disponible;
+// Cpus Tomadas
+sem_t cpu_tomadas;
+
 // Lista global de recursos de CPU
-t_list* cpus_conectadas;
+t_list *cpus_conectadas;
 
 // Lista global de recursos de CPU
 pthread_mutex_t mutex_lista_cpus;
-
-//CPUs para usar
-sem_t cpu_disponible;
-//Cpus Tomadas    
-sem_t cpu_tomadas;  
 
 // **************************************************
 //          Variables relacionadas a IO

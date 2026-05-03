@@ -3,7 +3,8 @@
 
 #include <stdint.h> 
 #include <utils/utils.h>
-#include <kernel_scheduler/src/utils_kernel_scheduler/variablesGlobales.h>
+#include<pthread.h>      // Para usar semaforos
+#include "variablesGlobales.h" // Para poder conocer variables globales en el config
 
 t_pcb* crear_pcb(int pid, int prioridad, t_estado estado);
 void *hilo_largo_plazo(void *arg);

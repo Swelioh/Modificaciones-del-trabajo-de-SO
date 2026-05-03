@@ -3,12 +3,11 @@
 
 #include <commons/log.h>
 #include <commons/config.h>
-#include <commons/collections/queue.h>
 #include <semaphore.h>
 #include <unistd.h>
 #include <serializacion/estructuras.h>
 #include <serializacion/serializacion.h>
-#include <queue.h>
+#include <commons/collections/queue.h>
 
 // **************************************************
 //              Variables globales generales
@@ -28,7 +27,10 @@ extern char *PUERTO_KERNEL_SCHEDULER; // Puerto que utiliza el scheduler como se
 // Logger
 extern t_log *logger;
 
-volatile sig_atomic_t seguir_ejecutando = 1;
+// Variable que almacena el FD que tiene el scheduler como servidor
+extern int socket_scheduler;
+
+extern volatile sig_atomic_t seguir_ejecutando; // TODO: Ver que onda esto, medio raro ese tipo
 
 //
 typedef enum
@@ -63,11 +65,11 @@ typedef struct
     pthread_mutex_t mutexLista;
 } listaEstados;
 
-listaEstados listaEstadosNew;
-listaEstados listaEstadosReady;
+extern listaEstados listaEstadosNew;
+extern listaEstados listaEstadosReady;
 
-sem_t semaforo_hay_propuestas_pcb;
-sem_t semaforo_hay_pcb_ready;
+extern sem_t semaforo_hay_propuestas_pcb;
+extern sem_t semaforo_hay_pcb_ready;
 
 // **************************************************
 //          Variables relacionadas a CPU
@@ -84,12 +86,6 @@ extern t_list *cpus_conectadas;
 // Lista global de recursos de CPU
 extern pthread_mutex_t mutex_lista_cpus;
 
-listaEstados listaEstadosNew;
-listaEstados listaEstadosReady;
-
-sem_t semaforo_hay_propuestas_pcb;
-sem_t semaforo_hay_pcb_ready;
-
 // **************************************************
 //          Variables relacionadas a IO
 // **************************************************
@@ -98,8 +94,7 @@ typedef struct
 {
     uint32_t pid_proceso_relacionado; // Para saber que proceso fue el que "publico" esta tarea
     uint32_t tiempoSleepEnMs;         // Tiempo en mS cuando la peticion fue tipo sleep
-                                      // Info para cuando es tipo STDIN o STDOUT
-    uint32_t registroDirecLogica;
+    uint32_t registroDirecLogica;     // Info para cuando es tipo STDIN o STDOUT
     uint32_t tamanioALeerEscribir;
 } t_tarea_io;
 

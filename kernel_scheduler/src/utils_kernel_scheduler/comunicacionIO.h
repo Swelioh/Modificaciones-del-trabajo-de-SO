@@ -3,9 +3,10 @@
 
 #include<pthread.h> //Para crear hilos
 #include "variablesGlobales.h"
-#include <serializacion/estructuras.h>
-#include <serializacion/serializacion.h>
-#include <variables_globales/variables_globales.h>
+#include <serializacion/estructuras.h> // Para saber que es un t_paquete y t_buffer
+#include <serializacion/serializacion.h> // Para tener las funciones de enviar paquete y recibir paquete completo
+#include <variables_globales/variables_globales.h>  // Para saber los codigos de operaciones
+#include <serializacion/scheduler_io/serializacionesScheduler_Io.h> // Para saber serializar y deserializar paquetes
 
 typedef struct {
     int socket_io;

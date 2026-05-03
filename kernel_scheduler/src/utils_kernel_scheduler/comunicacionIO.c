@@ -173,7 +173,7 @@ bool enviarSolicitudTipoSleep(int socket_io, uint32_t pid, uint32_t tiempomS)
     t_solicitud_io_sleep solicitud;
     solicitud.pid_proceso = pid;
     solicitud.tiempo_sleep_ms = tiempomS;
-    t_paquete* paquete_solicitud = armar_paquete(SOLICITUD_IO_SLEEP, &solicitud);
+    t_paquete* paquete_solicitud = armar_paquete_scheduler_io(SOLICITUD_IO_SLEEP, &solicitud);
     // La envio
     return enviar_paquete_a_io(socket_io, "SLEEP", paquete_solicitud);
 }
@@ -256,7 +256,7 @@ bool enviarSolicitudTipoStdin(int socket_io, uint32_t pid, uint32_t tamanio)
     t_solicitud_io_stdin solicitud;
     solicitud.pid_proceso = pid;
     solicitud.tamanioALeer = tamanio;
-    t_paquete* paquete_solicitud = armar_paquete(SOLICITUD_IO_STDIN, &solicitud);
+    t_paquete* paquete_solicitud = armar_paquete_scheduler_io(SOLICITUD_IO_STDIN, &solicitud);
     // Envio la solicitud
     return enviar_paquete_a_io(socket_io, "STDIN", paquete_solicitud);
 }

@@ -36,7 +36,7 @@ void inicializarModulo(char* pathConfig){
     //Para IO
     for(int i = 0; i < CANTIDAD_TOTAL_IO; i++) //Por cada hilo inicializo sus instancias de listas y semaforos
     {
-        tareas_io_pendientes[i] = queue_create(); //TODO: hay que ver si liberamos estas colas y estos semaforos
+        tareas_io_pendientes[i] = queue_create();
         pthread_mutex_init(&(mutex_lista_tareas_io[i]), NULL);
         sem_init(&semaforo_tareas_io_pendientes[i], 0, 0); // Los inicializo en 0 porque no hay tareas pendientes al principio
     }
@@ -59,11 +59,30 @@ int iniciarConexionKernelMemory(t_log* logger, char* ip_memory, char* puerto)
     return socket_memory;
 }
 
-void liberarModulo(t_log* logger_a_destruir,t_config* config_a_destruir){
-    log_destroy(logger_a_destruir);
+// Me libera la memoria de todas las cosas que pedi dinamicamente
+void liberarModulo() {
+    seguir_ejecutando = 0; // TODO: No se si sirve salir del while del hilo que atiende las conexiones, me parece que es medio al pedo
+
+    // Liberamos todas las estructuras que pedi de IO
+    for(int i = 0; i < CANTIDAD_TOTAL_IO; i++) //Por cada hilo destruyo sus instancias de colas y semaforos
+    {
+        int tamanio_cola = queue_size(tareas_io_pendientes[i]);
+        for (int j = 0; j < tamanio_cola; j ++)
+        {
+            t_tarea_io* tarea_a_eliminar = queue_pop(tareas_io_pendientes[i]); // Saco una tarea de la lista
+            free(tarea_a_eliminar); // La elimino
+        }
+        queue_destroy(tareas_io_pendientes[i]); // Una vez que libere todos los elementos de la lista destruyo la cola
+        pthread_mutex_destroy(&(mutex_lista_tareas_io[i]));
+        sem_destroy(&semaforo_tareas_io_pendientes[i]); // Los inicializo en 0 porque no hay tareas pendientes al principio
+    }
+    // Cerramos el socket que teniamos como servidor
+    close(socket_scheduler);
+    // Destruimos el config y el logger
+    log_destroy(logger);
     if(!string_array_is_empty(QUEUES_ALGORITHMS))
         string_array_destroy(QUEUES_ALGORITHMS);
-    config_destroy(config_a_destruir);
+    config_destroy(config);
 }
 
 void crear_proceso(char* path, int prioridad){

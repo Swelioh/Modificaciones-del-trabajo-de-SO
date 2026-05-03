@@ -8,7 +8,9 @@ int main(int argc, char* argv[]) {
 
     inicializarModulo(argv[1]);
 
-    signal(SIGINT, manejar_sigint);
+    // Relacionamos las se;ales de Control+C y cierre de consola a la funcion que me libera todo lo que pedi
+    signal(SIGINT, liberarModulo);
+    signal(SIGHUP, liberarModulo);
 
 	log_info(logger, "IP: %s", IP_KERNEL_MEMORY);
 	log_info(logger, "PUERTO_KERNEL_MEMORY: %s", PUERTO_KERNEL_MEMORY);
@@ -17,13 +19,13 @@ int main(int argc, char* argv[]) {
     // int socket_kernel_memory = iniciarConexionKernelMemory(logger, IP_KERNEL_MEMORY, PUERTO_KERNEL_MEMORY);
 
     //Iniciamos servidor para escuchar conexiones de CPU e IO
-	int socket_servidor = iniciar_servidor(logger, PUERTO_KERNEL_SCHEDULER);
+	socket_scheduler = iniciar_servidor(logger, PUERTO_KERNEL_SCHEDULER);
 
     pthread_t hilo;
 
     while (seguir_ejecutando) {
         // Esperamos a que se conecte un cliente
-        int fd_cliente = esperar_cliente(socket_servidor, logger);
+        int fd_cliente = esperar_cliente(socket_scheduler, logger);
 
         // Obtengo el mensaje de handshake del modulo
         t_paquete* paquete = recibir_paquete_completo(fd_cliente);
@@ -35,7 +37,7 @@ int main(int argc, char* argv[]) {
         
         // Dependiendo que modulo sea creo un hilo para atenderlo
          switch (paquete->codigo_operacion) {
-            case INGRESO_CPU:
+            case HANDSHAKE_CPU:
                 t_args_handler_cpu* args = malloc(sizeof(t_args_handler_cpu));
                 args->socket_cpu = fd_cliente;
                 args->buffer  = paquete->buffer;
@@ -43,34 +45,19 @@ int main(int argc, char* argv[]) {
                 pthread_detach(hilo);
                 break;
             
-            case INGRESO_IO:
+            case HANDSHAKE_IO:
                 iniciarIO(fd_cliente, paquete->buffer);
                 break;
+
             default:
                 log_warning(logger, "Operacion desconocida. No quieras meter la pata");
                 break;
         }
-
-        eliminar_paquete(paquete);
     
-
         // Libero la memoria que se habia pedido para almacenar el paquete
         if(paquete != NULL)
             eliminar_paquete(paquete);
 	}
     
-    // Liberar recursos TODO!!! Cada Hilo maneja su desconexion.
-    /*liberar_conexion(conexion);
-    liberar_conexion(conexion_servidor);*/
-    
     return 0;
-}
-
-// ================== SIGNAL HANDLER ==================
-
-void manejar_sigint(int senial) {
-    seguir_ejecutando = 0;
-
-    close(socket_servidor);
-    liberarModulo(logger, config);
 }

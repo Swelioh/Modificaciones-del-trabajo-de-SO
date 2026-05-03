@@ -3,9 +3,10 @@
 
 #include<pthread.h> //Para crear hilos
 #include "variablesGlobales.h"
-#include <serializacion/estructuras.h>
-#include <serializacion/serializacion.h>
-#include <variables_globales/variables_globales.h>
+#include <serializacion/estructuras.h> // Para conocer t_paquete y t_buffer
+#include <serializacion/serializacion.h> // Para tener funciones de enviar y recibir paquetes
+#include <variables_globales/variables_globales.h> // Para saber los codigos de operaciones
+#include <serializacion/scheduler_cpu/serializacionesScheduler_Cpu.h> // Para saber serializar y deserializar paquetes de scheduler - cpu
 
 // ************************************************************************
 //                            ESTRUCTURAS
