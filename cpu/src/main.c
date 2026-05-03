@@ -49,16 +49,16 @@ int main(int argc, char* argv[]) {
 	log_info(logger, "PUERTO_KERNEL_MEMORY: %s", puerto_kernel_memory);
 
     // CONEXION CLIENTE CON KERNEL SCHEDULER
-	//int conexion_scheduler = crear_conexion(ip, puerto_kernel_scheduler);
-    //log_info(logger, "> Modulo CPU Conectado a Scheduler");
+	int conexion_scheduler = crear_conexion(ip, puerto_kernel_scheduler);
+    log_info(logger, "> Modulo CPU Conectado a Scheduler");
 
     // CONEXION CLIENTE CON MEMORY STICK
-    //int conexion_stick = crear_conexion(ip, puerto_memory_stick);
-    //log_info(logger, "> Modulo CPU Conectado a Memory Stick");
+    int conexion_stick = crear_conexion(ip, puerto_memory_stick);
+    log_info(logger, "> Modulo CPU Conectado a Memory Stick");
 
     // CONEXION CLIENTE CON KERNEL MEMORY
-	//int conexion_memory = crear_conexion(ip, puerto_kernel_memory);
-    //log_info(logger, "> Modulo CPU Conectado a Kernel Memory");
+	int conexion_memory = crear_conexion(ip, puerto_kernel_memory);
+    log_info(logger, "> Modulo CPU Conectado a Kernel Memory");
 
     //--------------------------------------------DESARROLLO CPU
     int pid_actual = 1; // Mock
@@ -73,63 +73,43 @@ int main(int argc, char* argv[]) {
     "EXIT"
     };
 
-
-    while (procesando) {
+while (1) {
+    log_info(logger, "CPU esperando proceso del Kernel...");
     
-    if (registros.PC >= 5) break;
-    // 1. FETCH: Buscar la instrucción
-    char* instruccion_proxima = programa[registros.PC];
+    // 1. La CPU se bloquea acá hasta que el Kernel mande algo
+    int cod_op = recibir_operacion(conexion_scheduler);
     
-    // LOG OBLIGATORIO: ## PID: <PID> FETCH - Program Counter: <PC>
-    log_info(logger, "## PID: %d - FETCH - Program Counter: %d", pid_actual, registros.PC);
+    switch (cod_op) {
+        case NUEVO_PROCESO:
+            // 2. Sabemos que nos mandaron un PID, lo leemos
+            pid_actual = recibir_pid(conexion_scheduler);
+            log_info(logger, "El Kernel me asignó el PID: %d", pid_actual);
+            
+            // TODO: Acá pedirías el Contexto a la Memoria
+            solicitar_contexto_a_memoria(conexion_memory, pid_actual);
 
-    // 2. DECODE + 3. EXECUTE
-    if (strncmp(instruccion_proxima, "SET", 3) == 0) {
-        char reg[5];
-        int val;
-        sscanf(instruccion_proxima, "SET %s %d", reg, &val);
-        
-        // Simulación de escritura en registro
-        if (strcmp(reg, "AX") == 0) registros.AX = (uint8_t)val;
-        if (strcmp(reg, "EAX") == 0) registros.EAX = (uint32_t)val;
-        
-        log_info(logger, "## PID: %d - Ejecutando: %s", pid_actual, instruccion_proxima);
-        registros.PC++; 
-    } 
-    else if (strncmp(instruccion_proxima, "SUM", 3) == 0) {
-        // SUM (Destino, Origen)
-        registros.AX += registros.BX;
-        log_info(logger, "## PID: %d - Ejecutando: %s", pid_actual, instruccion_proxima);
-        registros.PC++;
+            registros = recibir_contexto(conexion_memory);
+            log_info(logger, "Contexto recibido. PC inicial: %d", registros.PC);
+            // TODO: Acá arranca tu while(procesando) { Fetch, Decode, Execute... }
+            procesando = true;
+            while(procesando) {
+            // ... Acá va tu código de Fetch, Decode y Execute ...
+            }
+
+            break;
+            
+        case -1:
+            log_error(logger, "El Kernel se desconectó. Apagando CPU.");
+            return EXIT_FAILURE;
+            
+        default:
+            log_warning(logger, "Operacion desconocida del Kernel");
+            break;
     }
-    else if (strncmp(instruccion_proxima, "EXIT", 4) == 0) {
-        log_info(logger, "## PID: %d - Ejecutando: %s", pid_actual, instruccion_proxima);
-        procesando = false; // Termina el ciclo para este proceso
-    }
-    else if (strncmp(instruccion_proxima, "JNZ", 3) == 0) {
-    char reg[5];
-    int salto;
-
-    sscanf(instruccion_proxima, "JNZ %s %d", reg, &salto);
-
-    uint32_t valor = 0;
-
-    if (strcmp(reg, "AX") == 0) valor = registros.AX;
-    if (strcmp(reg, "EAX") == 0) valor = registros.EAX;
-
-    if (valor != 0) {
-        registros.PC = salto;
-    } else {
-        registros.PC++;
-    }
-
-    log_info(logger, "## PID: %d - Ejecutando: %s", pid_actual, instruccion_proxima);
 }
-    // 4. CHECK INTERRUPT
-    // chequear si el Kernel mandó algo por el socket de interrupción.
-    }
 
-    //liberar_recursos(logger, config, conexion_scheduler, conexion_stick, conexion_memory);
+
+    liberar_recursos(logger, config, conexion_scheduler, conexion_stick, conexion_memory);
 
     saludar("cpu");
     return 0;
