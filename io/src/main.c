@@ -1,40 +1,41 @@
-#include <utils/utils.h>
-
-void liberar_recursos(t_log* logger, t_config* config, int conexion_scheduler)
-{
-    liberar_conexion(conexion_scheduler);
-    log_destroy(logger);
-    config_destroy(config);
-}
+#include <utils_io/inicializacion.h>
+#include <utils_io/administracionesTipo.h>
 
 int main(int argc, char* argv[]) {
-    t_log* logger = log_create("modulo_io.log", "modulo_io", 1, LOG_LEVEL_TRACE);
+    // Validamos que haya 2 argumentos
+    validarArgumentos (argc);
 
-    char* ip;
-    char* puerto_kernel_scheduler;
+    // Cargamos el archivo de config y obtenemos el tipo de modulo que pusimos por parametro
+    inicializarModulo(argv[1], argv[2]);
 
-    if (argc != 3) {
-        log_error(logger, "Uso: %s [Archivo Config] [Tipo]\n", argv[0]);
-        return EXIT_FAILURE;
-    }
+    // Logueamos info adicional
+	log_debug(logger, "IP: %s", IP_KERNEL_SCHEDULER);
+	log_debug(logger, "PUERTO_KERNEL_MEMORY: %s", PUERTO_KERNEL_SCHEDULER);
+    log_debug(logger, "> Modulo io Listo");
 
-    // Archivo de config
-    t_config* config = config_create(argv[1]);
-    if (config == NULL) {
-        log_error(logger, "No se pudo cargar el config: %s\n", argv[1]);
-        return EXIT_FAILURE;
-    }
-    get_string_from_config(config, "IP", &ip);
-    get_string_from_config(config, "PUERTO_KERNEL_SCHEDULER", &puerto_kernel_scheduler);
+    // Nos conectamos con el Scheduler, en caso de error finaliza el programa
+    int socket_kernel_scheduker = iniciarConexionKernelScheduler(logger);
 
-	log_info(logger, "IP: %s", ip);
-	log_info(logger, "PUERTO_KERNEL_SCHEDULER: %s", puerto_kernel_scheduler);
+    // Enviamos handshake al Scheduler para informarle el tipo de IO que somos
+    enviarIngresoAScheduler(socket_kernel_scheduker);
     
-    // CONEXION CLIENTE CON KERNEL SCHEDULER
-	int conexion_scheduler = crear_conexion(logger, ip, puerto_kernel_scheduler);
-    log_info(logger, "> Modulo IO Conectado a Scheduler");
-
-    liberar_recursos(logger, config, conexion_scheduler);
-
+    // En base al modulo que creamos administramos la comunicacion de forma diferente
+    switch(tipo_modulo)
+    {
+        case SLEEP:
+            administrarIoTipoSleep(socket_kernel_scheduker);
+            break;
+        case STDIN:
+            administrarIoTipoStdin(socket_kernel_scheduker);
+            break;
+        case STDOUT:
+            administrarIoTipoStdout(socket_kernel_scheduker);
+            break;
+        default: // El default no hace falta que tenga nada porque ya en este punto es si o si uno de esos 3
+            break;
+    }
+    
+    close(socket_kernel_scheduker);
+    liberarModulo(logger, config);
     return 0;
 }

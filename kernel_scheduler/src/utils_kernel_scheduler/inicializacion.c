@@ -1,8 +1,4 @@
 #include "inicializacion.h"
-typedef struct {
-    int fd;
-    int conexion_servidor;
-} t_args;
 
 void validarArgumentos (int cantidadArgumentos){
     if (cantidadArgumentos != 3) {
@@ -14,7 +10,7 @@ void validarArgumentos (int cantidadArgumentos){
 
 void inicializarModulo(char* pathConfig){
     // Instanciamos el config
-    t_config* config = abrirConfig(pathConfig);
+    config = abrirConfig(pathConfig);
 
     //Leemos los valores y guardamos en las variables globales
     get_string_from_config(config, "LOG_LEVEL", &LOG_LEVEL);
@@ -30,99 +26,63 @@ void inicializarModulo(char* pathConfig){
     //Creamos el logger apartir del valor del config
     t_log_level nivelLogger = log_level_from_string(LOG_LEVEL);
     logger = log_create("kernel_scheduler.log", "kernel_scheduler", 1, nivelLogger);
+
+    //Inicializamos las estructuras y semaforos que necesitamos
+
+    //Para CPU
+    cpus_conectadas = list_create();
+    pthread_mutex_init(&mutex_lista_cpus, NULL);
+
+    //Para IO
+    for(int i = 0; i < CANTIDAD_TOTAL_IO; i++) //Por cada hilo inicializo sus instancias de listas y semaforos
+    {
+        tareas_io_pendientes[i] = queue_create();
+        pthread_mutex_init(&(mutex_lista_tareas_io[i]), NULL);
+        sem_init(&semaforo_tareas_io_pendientes[i], 0, 0); // Los inicializo en 0 porque no hay tareas pendientes al principio
+    }
+
     return;
 }
 
-void handler_cpu(t_args* args) {
-    printf("FALTA IMPLEMENTAR");
-    // int fd = args->fd;
-    // free(args);
-
-    // while (1) {
-    //     t_paquete* paquete = recibir_paquete_completo(fd);
-
-    //     if (paquete == NULL) {
-    //         manejar_desconexion(fd, CPU);
-    //         close(fd);
-    //         break;
-    //     }
-
-    //     switch (paquete->codigo_operacion) {
-
-    //         case OP_CREAR_PROCESO: {
-    //             int32_t pid = leer_int32_del_buffer(paquete->buffer);
-    //             string psuedocodigo = leer_string_del_buffer(paquete->buffer);
-    //             procesar_fin(pid);
-    //             break;
-    //         }
-            
-    //         case OP_FIN_PROCESO: {
-    //             int32_t pid = leer_int32_del_buffer(paquete->buffer);
-    //             procesar_fin(pid);
-    //             break;
-    //         }
-
-    //         case OP_SYSCALL: {
-    //             int32_t syscall = leer_int32_del_buffer(paquete->buffer);
-    //             manejar_syscall(syscall, paquete->buffer);
-    //             break;
-    //         }
-
-    //         case OP_INTERRUPCION: {
-    //             manejar_interrupcion();
-    //             break;
-    //         }
-    //     }
-
-    //     eliminar_paquete(paquete);
-    // }
+// Me devuelve el fd del socket del kernel memory
+int iniciarConexionKernelMemory(t_log* logger, char* ip_memory, char* puerto)
+{
+    // Nos conectamos al Kernel Memory
+	int socket_memory = crear_conexion(logger, IP_KERNEL_MEMORY, PUERTO_KERNEL_MEMORY);
+    if(socket_memory == -1)
+    {
+        log_error(logger, "No se pudo establecer la conexion con el Modulo Kernel Memory. Finalizando el programa.");
+        liberarModulo(logger, config);
+        exit(EXIT_FAILURE);
+    }
+    log_info(logger, "## Conectado a Kernel Memory"); //LOG_OBLIGATORIO
+    return socket_memory;
 }
 
-void handler_io(t_args* args) {
-    printf("FALTA IMPLEMENTAR");
-    // int fd = args->fd;
-    // free(args);
+// Me libera la memoria de todas las cosas que pedi dinamicamente
+void liberarModulo() {
+    seguir_ejecutando = 0; // TODO: No se si sirve salir del while del hilo que atiende las conexiones, me parece que es medio al pedo
 
-    // while (1) {
-    //     t_paquete* paquete = recibir_paquete_completo(fd);
-
-    //     if (paquete == NULL) {
-    //         manejar_desconexion(fd, IO);
-    //         close(fd);
-    //         break;
-    //     }
-
-    //     switch (paquete->codigo_operacion) {
-
-    //         case OP_IO_FIN: {
-    //             int32_t pid = leer_int32_del_buffer(paquete->buffer);
-    //             finalizar_io(pid);
-    //             break;
-    //         }
-
-    //     }
-
-    //     eliminar_paquete(paquete);
-    // }
-}
-
-void manejar_desconexion(int conexion_servidor, int tipo_cliente){
-    printf("FALTA IMPLEMENTAR");
-    // switch (tipo_cliente) {
-    //     case TIPO_CPU:
-    //         liberar_conexion(conexion_servidor);//desconectar_cpu(fd) Cada desconexion se resuelve de distinta forma.
-    //         break;
-    //     case TIPO_IO:
-    //         liberar_conexion(conexion_servidor);//desconectar_io(fd); Cada desconexion se resuelve de distinta forma.
-    //         break;
-    // }
-}
-
-void liberarModulo(t_log* logger_a_destruir,t_config* config_a_destruir){
-    log_destroy(logger_a_destruir);
+    // Liberamos todas las estructuras que pedi de IO
+    for(int i = 0; i < CANTIDAD_TOTAL_IO; i++) //Por cada hilo destruyo sus instancias de colas y semaforos
+    {
+        int tamanio_cola = queue_size(tareas_io_pendientes[i]);
+        for (int j = 0; j < tamanio_cola; j ++)
+        {
+            t_tarea_io* tarea_a_eliminar = queue_pop(tareas_io_pendientes[i]); // Saco una tarea de la lista
+            free(tarea_a_eliminar); // La elimino
+        }
+        queue_destroy(tareas_io_pendientes[i]); // Una vez que libere todos los elementos de la lista destruyo la cola
+        pthread_mutex_destroy(&(mutex_lista_tareas_io[i]));
+        sem_destroy(&semaforo_tareas_io_pendientes[i]); // Los inicializo en 0 porque no hay tareas pendientes al principio
+    }
+    // Cerramos el socket que teniamos como servidor
+    close(socket_scheduler);
+    // Destruimos el config y el logger
+    log_destroy(logger);
     if(!string_array_is_empty(QUEUES_ALGORITHMS))
         string_array_destroy(QUEUES_ALGORITHMS);
-    config_destroy(config_a_destruir);
+    config_destroy(config);
 }
 
 void crear_proceso(char* path, int prioridad){

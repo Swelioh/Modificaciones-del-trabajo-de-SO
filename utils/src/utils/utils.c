@@ -117,6 +117,7 @@ int esperar_cliente(int socket_servidor, t_log * logger)
 	return socket_cliente;
 }
 
+// Devuelve codigo de operacion o -1 en caso de que se haya desconectado (HACIENDO CLOSE DEL SOCKET). 
 int recibir_operacion(int socket_cliente)
 {
 	int cod_op;
@@ -140,6 +141,7 @@ t_config* abrirConfig(char* pathAlConfig)
         printf("No se pudo inicializar el archivo de config, por favor revise el path. Actual: '%s'\n", pathAlConfig);
         exit(EXIT_FAILURE) ;
     }
+	return config;
 }
 
 // Me obtiene el string del config. NO HACE FALTA LIBERAR LA MEMORIA

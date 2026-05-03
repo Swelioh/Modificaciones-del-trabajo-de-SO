@@ -1,61 +1,63 @@
-#include <utils/inicializacion.h>
+#include <utils_kernel_scheduler/inicializacion.h>
+#include <utils_kernel_scheduler/comunicacionProcesador.h>
+#include <utils_kernel_scheduler/comunicacionIO.h>
 
 int main(int argc, char* argv[]) {
-    // pthread_t hilo;
 
     validarArgumentos (argc);
 
     inicializarModulo(argv[1]);
 
+    // Relacionamos las se;ales de Control+C y cierre de consola a la funcion que me libera todo lo que pedi
+    signal(SIGINT, liberarModulo);
+    signal(SIGHUP, liberarModulo);
+
 	log_info(logger, "IP: %s", IP_KERNEL_MEMORY);
 	log_info(logger, "PUERTO_KERNEL_MEMORY: %s", PUERTO_KERNEL_MEMORY);
     log_info(logger, "> Kernel Scheduler Listo");
 
-    // Nos conectamos al Kernel Memory
-	int conexion_memory = crear_conexion(logger, IP_KERNEL_MEMORY, PUERTO_KERNEL_MEMORY);
-    if(conexion_memory == -1)
-    {
-        log_error(logger, "No se pudo establecer la conexion con el Modulo Kernel Memory. Finalizando el programa.");
-        liberarModulo(logger, config);
-        exit(EXIT_FAILURE);
-    }
+    // int socket_kernel_memory = iniciarConexionKernelMemory(logger, IP_KERNEL_MEMORY, PUERTO_KERNEL_MEMORY);
 
-    // //Iniciamos servidor para escuchar conexiones de CPU e IO
-	// int conexion_servidor = iniciar_servidor(logger, PUERTO_KERNEL_SCHEDULER);
+    //Iniciamos servidor para escuchar conexiones de CPU e IO
+	socket_scheduler = iniciar_servidor(logger, PUERTO_KERNEL_SCHEDULER);
 
-    // while (1) {
-    //     int fd_cliente = esperar_cliente(conexion_servidor, logger);
+    pthread_t hilo;
 
-    //     // Reservamos memoria para pasar ambos parámetros
-    //     t_args* args = malloc(sizeof(t_args));
-    //     args->fd = fd_cliente;
-    //     args->conexion_servidor = conexion_servidor;
+    while (seguir_ejecutando) {
+        // Esperamos a que se conecte un cliente
+        int fd_cliente = esperar_cliente(socket_scheduler, logger);
 
-    //     // handshake. Crear un estructura para regitrar lo que tenemos
-    //     t_paquete* hs = recibir_paquete_completo(fd);
-    //     if (hs == NULL) { close(fd); return NULL; }
-    //     int tipo = hs->codigo_operacion;
-    //     eliminar_paquete(hs);
+        // Obtengo el mensaje de handshake del modulo
+        t_paquete* paquete = recibir_paquete_completo(fd_cliente);
 
-    //     switch (hs) {
-	// 	case HANDSHAKE_CPU:
-	// 		    pthread_create(&hilo, NULL, (void*) handler_cpu, args);
-	// 		break;
-	// 	case HANDSHAKE_IO:
-	// 		    pthread_create(&hilo, NULL, (void*) handler_io, args);
-	// 		break;
-	// 	case -1:
-	// 		log_error(logger, "el cliente se desconecto. Terminando servidor");
-	// 		return EXIT_FAILURE;
-	// 	default:
-	// 		log_warning(logger,"Operacion desconocida. No quieras meter la pata");
-	// 		break;
-	// 	}
-	// }
+        if(paquete == NULL){ // Si hubo un error en el handshake cierro la conexion
+            close(fd_cliente);
+            continue;
+        }
+        
+        // Dependiendo que modulo sea creo un hilo para atenderlo
+         switch (paquete->codigo_operacion) {
+            case HANDSHAKE_CPU:
+                t_args_handler_cpu* args = malloc(sizeof(t_args_handler_cpu));
+                args->socket_cpu = fd_cliente;
+                args->buffer  = paquete->buffer;
+                pthread_create(&hilo, NULL, handlerCPU, args);
+                pthread_detach(hilo);
+                break;
+            
+            case HANDSHAKE_IO:
+                iniciarIO(fd_cliente, paquete->buffer);
+                break;
+
+            default:
+                log_warning(logger, "Operacion desconocida. No quieras meter la pata");
+                break;
+        }
     
-    //Liberar recursos TODO!!! Cada Hilo maneja su desconexion.
-    /*liberar_conexion(conexion);
-    liberar_conexion(conexion_servidor);*/
-    liberarModulo(logger, config);
+        // Libero la memoria que se habia pedido para almacenar el paquete
+        if(paquete != NULL)
+            eliminar_paquete(paquete);
+	}
+    
     return 0;
 }
