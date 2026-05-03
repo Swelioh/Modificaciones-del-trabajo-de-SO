@@ -76,7 +76,7 @@ void enviarIngresoAScheduler(int socket_scheduler)
     t_ingreso_io mensaje_ingreso;
     mensaje_ingreso.tipo_io = tipo_modulo;
     // Armo paquete y envio
-    t_paquete* paquete = armar_paquete(INGRESO_IO, &mensaje_ingreso);
+    t_paquete* paquete = armar_paquete_scheduler_io(HANDSHAKE_IO, &mensaje_ingreso);
     enviar_paquete(paquete, socket_scheduler);
 	eliminar_paquete(paquete);
     return;

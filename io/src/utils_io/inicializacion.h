@@ -5,7 +5,8 @@
 #include "variablesGlobales.h"
 #include <serializacion/estructuras.h>
 #include <serializacion/serializacion.h>
-#include <variables_globales/variables_globales.h>
+#include <variables_globales/variables_globales.h> // Para saber codigos de operacion
+#include <serializacion/scheduler_io/serializacionesScheduler_Io.h> // Para conocer el enum de tipos de IO
 
 // *********************************************
 //              PROTOTIPOS

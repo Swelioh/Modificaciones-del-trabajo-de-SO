@@ -2,7 +2,7 @@
 #define ESTRUCTURAS_H_
 
 #include<netdb.h>
-#include<variables_globales/variables_globales.h>
+#include<variables_globales/variables_globales.h> // Para saber que es un codigo_operacion
 
 // ********************************************************************************
 //                            ESTRUCTURAS DE PAQUETES
@@ -16,8 +16,8 @@ typedef struct
 
 typedef struct
 {
-	codigo_operacion codigo_operacion; //Codigo para reconocer el mensaje
-	t_buffer* buffer; //Buffer con informacion serializada
+	codigo_operacion codigo_operacion; // Codigo para reconocer el mensaje
+	t_buffer* buffer; // Buffer con informacion serializada
 } t_paquete;
 
 

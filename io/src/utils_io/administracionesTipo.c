@@ -21,7 +21,7 @@ bool enviar_paquete_a_scheduler(int socket_scheduler, t_paquete* paquete)
 bool mandarSolicitudAScheduler(int socket_scheduler)
 {
     // Armo paquete y envio
-    t_paquete* paquete = armar_paquete(A_LA_ESPERA_IO, NULL);
+    t_paquete* paquete = armar_paquete_scheduler_io(A_LA_ESPERA_IO, NULL);
     // Envio paquete
     return enviar_paquete_a_scheduler(socket_scheduler, paquete);
 }
@@ -89,7 +89,7 @@ bool mandarRegresoTipoSleepAScheduler(int socket_scheduler, uint32_t pid)
     // Armo la request
     t_regreso_io_sleep regreso;
     regreso.pid_proceso = pid;
-    t_paquete* paquete = armar_paquete(REGRESO_IO_SLEEP, &regreso);
+    t_paquete* paquete = armar_paquete_scheduler_io(REGRESO_IO_SLEEP, &regreso);
     // La envio
     return enviar_paquete_a_scheduler(socket_scheduler, paquete);
 }
@@ -197,7 +197,7 @@ bool mandarRegresoTipoStdinAScheduler(int socket_scheduler, uint32_t pid, uint32
     regreso.pid_proceso = pid;
     regreso.largo_cadena = largo-1; // PORQUE CUANDO ARMO EL PAQUETE LA FUNCION DE AGREGAR_STRING LE SUMA UNO PARA EL \0 QUE YO YA ESTOY CONSIDERANDO ACA
     regreso.cadena = string;
-    t_paquete* paquete = armar_paquete(REGRESO_IO_STDIN, &regreso);
+    t_paquete* paquete = armar_paquete_scheduler_io(REGRESO_IO_STDIN, &regreso);
     // La envio
     return enviar_paquete_a_scheduler(socket_scheduler, paquete);
 }
@@ -234,6 +234,6 @@ bool mandarRegresoTipoStdoutAScheduler(int socket_scheduler, uint32_t pid)
 {
     t_regreso_io_stdout regreso;
     regreso.pid_proceso = pid;
-    t_paquete* paquete = armar_paquete(REGRESO_IO_STDOUT, &regreso);
+    t_paquete* paquete = armar_paquete_scheduler_io(REGRESO_IO_STDOUT, &regreso);
     return enviar_paquete_a_scheduler(socket_scheduler, paquete);
 }
