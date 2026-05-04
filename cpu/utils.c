@@ -16,12 +16,11 @@ int recibir_pid(int socket_cliente) {
     
     // Primero recibimos cuánto pesa el dato (el size del buffer)
     recv(socket_cliente, &size, sizeof(uint32_t), MSG_WAITALL);
-    
     // Ahora recibimos el dato real (el stream)
     recv(socket_cliente, &pid, size, MSG_WAITALL);
     
     return pid;
-}
+} //VER DE CAMBIAR
 
 void solicitar_contexto_a_memoria(int socket_memoria, int pid) {
     op_code codigo = PEDIR_CONTEXTO;
@@ -73,10 +72,10 @@ char* fetch_instruccion(int socket_memoria, int pid, uint32_t pc) {
     recv(socket_memoria, &cod_op_recibido, sizeof(int), MSG_WAITALL);
     recv(socket_memoria, &size_instruccion, sizeof(uint32_t), MSG_WAITALL);
 
-    // 3. Reservamos memoria exacta para el string + 1 byte para el centinela '\0'
+    // Reserva memoria exacta para el string + 1 byte para el centinela '\0'
     char* instruccion = malloc(size_instruccion + 1);
     
-    // Leemos el texto crudo
+    // texto crudo
     recv(socket_memoria, instruccion, size_instruccion, MSG_WAITALL);
     instruccion[size_instruccion] = '\0'; // Aseguramos que C lo lea como un string válido
 

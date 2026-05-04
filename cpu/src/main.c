@@ -91,6 +91,74 @@ while (1) {
                 
                 log_info(logger, "## PID: %d - FETCH - Program Counter: %d", pid_actual, registros.PC);
                 
+                //TODO: EXECUTE (HECHO, HAY QUE VER SI ESTA BIEN)
+                // DECODE
+               
+                char operacion[20] = {0};
+                char parametro1[20] = {0};
+                char parametro2[20] = {0};
+                
+                //  palabras del string (ej: "SET" "AX" "10")
+                // ¡Que pasa con EXIT? DUDA DE IMPLEMENTACION??
+                sscanf(instruccion_proxima, "%s %s %s", operacion, parametro1, parametro2);
+                // EXECUTE
+                if (strcmp(operacion, "SET") == 0) {
+                    // SET (Registro, Valor)
+                    int valor = atoi(parametro2); // Convertimos el string del número a un int real
+                    
+                    // Mapeamos el string del registro a nuestro t_registros
+                    if (strcmp(parametro1, "AX") == 0) registros.AX = (uint8_t)valor;
+                    else if (strcmp(parametro1, "BX") == 0) registros.BX = (uint8_t)valor;
+                    else if (strcmp(parametro1, "CX") == 0) registros.CX = (uint8_t)valor;
+                    else if (strcmp(parametro1, "DX") == 0) registros.DX = (uint8_t)valor;
+                    else if (strcmp(parametro1, "EAX") == 0) registros.EAX = (uint32_t)valor;
+                    else if (strcmp(parametro1, "EBX") == 0) registros.EBX = (uint32_t)valor;
+                    else if (strcmp(parametro1, "ECX") == 0) registros.ECX = (uint32_t)valor;
+                    else if (strcmp(parametro1, "EDX") == 0) registros.EDX = (uint32_t)valor;
+
+                   
+                    log_info(logger, "## PID: %d - Ejecutando: %s - [%s, %s]", pid_actual, operacion, parametro1, parametro2);
+                    
+                    registros.PC++; 
+                } 
+                else if (strcmp(operacion, "SUM") == 0) {
+                    // SUM (Destino, Origen) - Asumimos AX y BX para tu prueba
+                    if (strcmp(parametro1, "AX") == 0 && strcmp(parametro2, "BX") == 0) {
+                        registros.AX += registros.BX;
+                    }
+                    
+                    log_info(logger, "## PID: %d - Ejecutando: %s - [%s, %s]", pid_actual, operacion, parametro1, parametro2);
+                    registros.PC++;
+                }
+                else if (strcmp(operacion, "JNZ") == 0) {
+                    // JNZ (Registro, Salto)
+                    uint32_t salto = (uint32_t)atoi(parametro2);
+                    uint32_t valor_registro = 0;
+
+                    if (strcmp(parametro1, "AX") == 0) valor_registro = registros.AX;
+                    else if (strcmp(parametro1, "EAX") == 0) valor_registro = registros.EAX;
+
+                    log_info(logger, "## PID: %d - Ejecutando: %s - [%s, %s]", pid_actual, operacion, parametro1, parametro2);
+
+                    if (valor_registro != 0) {
+                        registros.PC = salto; // Saltamos (no sumamos 1)
+                    } else {
+                        registros.PC++;       // Avanzamos normal
+                    }
+                }
+                else if (strcmp(operacion, "EXIT") == 0) {
+                    log_info(logger, "## PID: %d - Ejecutando: %s", pid_actual, operacion);
+                    procesando = false; // Rompe el ciclo
+                }
+                else {
+                    log_error(logger, "PID: %d - Instruccion desconocida: %s", pid_actual, operacion);
+                    procesando = false; // Rompemos por seguridad
+                }
+                //LIBERO MEMORIA DE LA INSTRUCCION
+                free(instruccion_proxima);
+
+                
+                // 4. CHECK INTERRUPT
 
             }
 
