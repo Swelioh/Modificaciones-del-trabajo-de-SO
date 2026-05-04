@@ -10,27 +10,25 @@
 #include<string.h>
 #include<commons/log.h>
 #include<commons/config.h>
+#include<commons/string.h>
 #include <stdint.h>     
 #include <stdbool.h>
-/**
-* @brief Imprime un saludo por consola
-* @param quien Módulo desde donde se llama a la función
-* @return No devuelve nada
-*/
-void saludar(char* quien);
 
-// Funciones para CLIENTE
-
-int crear_conexion(char* ip, char* puerto);
+// Cliente
+int crear_conexion(t_log* logger, char* ip, char* puerto);
+// TODO: ESTE VA EN SCHEDULER
 void liberar_conexion(int socket_cliente);
 
-// Funciones para SERVIDOR
+// Servidor
 int iniciar_servidor(t_log* logger, char* puerto);
 int esperar_cliente(int socket_servidor, t_log * logger);
+int recibir_operacion(int socket_cliente);
 
-//Config
-t_config* iniciar_config(void);
-void get_string_from_config(t_log* logger, t_config* config, char* clave, char** valor);
+// Config
+t_config* abrirConfig(char* pathAlConfig);
+void get_string_from_config(t_config* config, char* clave, char** valor);
+void get_int_from_config(t_config* config, char* clave, int* valor);
+void get_array_from_config(t_config* config, char* clave, char*** valor);
 
 typedef enum {
     SET, SUM, SUB, JNZ, COPY_MEM, MOV_IN, MOV_OUT, // Instrucciones de CPU

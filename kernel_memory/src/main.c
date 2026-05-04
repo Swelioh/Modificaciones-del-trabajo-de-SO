@@ -1,37 +1,85 @@
-#include <utils/utils.h>
-
-void liberar_recursos(t_log* logger, int conexion_scheduler)
-{
-    liberar_conexion(conexion_scheduler);
-    log_destroy(logger);
-}
+#include <serializacion/estructuras.h>
+#include <utils_memory/inicializacion.h>
+#include <variables_globales/variables_globales.h>
+#include <serializacion/serializacion.h>
+#include <handlers_kernel_memory/handler_cpu.h>
+#include <handlers_kernel_memory/handler_kernel_scheduler.h>
+#include <pthread.h>
+// TODO: armar un archivo .h para centralizar los includes
 
 int main(int argc, char* argv[]) {
-    char* puerto_kernel_memory;
 
-    t_log* logger = log_create("kernel_memory.log", "kernel_memory", 1, LOG_LEVEL_TRACE);
+    //TODO hacer atexit(funcitions); para que se ejecuten cuando se usa exit(asdasd);
+    validar_argumentos(argc);
 
+    inicializar_modulo(argv[1]);
+
+    log_info(logger, "PUERTO_KERNEL_MEMORY: %s", PUERTO_KERNEL_MEMORY);
     log_info(logger, "> Kernel Memory Listo");
-
-    // Archivos de Config
-    t_config* config = config_create(argv[1]);
-    if (config == NULL) {
-        log_error(logger, "No se pudo cargar el config: %s\n", argv[1]);
-        return EXIT_FAILURE;
-    }
-    get_string_from_config(logger, config, "PUERTO_KERNEL_MEMORY", &puerto_kernel_memory);
 	
-    log_info(logger, "PUERTO_KERNEL_MEMORY: %s", puerto_kernel_memory);
-    
-    int socket_servidor = iniciar_servidor(logger, puerto_kernel_memory);
+    int conexion_servidor = iniciar_servidor(logger, PUERTO_KERNEL_MEMORY);
 
-    esperar_cliente(socket_servidor, logger);
-    esperar_cliente(socket_servidor, logger);
-    esperar_cliente(socket_servidor, logger);
-    esperar_cliente(socket_servidor, logger);
+	while(1) {
+    	pthread_t hilo;
 
-    liberar_recursos(logger, socket_servidor);
+		//Nos quedamos esperando a que se conecte algun modulo
+		int fd_cliente = esperar_cliente(conexion_servidor, logger);
 
-    saludar("kernel_memory");
+		//Handshake para saber quien se conecto
+        t_paquete* hs = recibir_paquete_completo(fd_cliente);	// Se podria usar funcion: recibir_operacion que devuelve el cod_op nomas
+        
+		//Validamos que pudimos recibir el handshake, sino continuamos con la siguiente iteracion del bucle
+		if (hs == NULL) { 
+			close(fd_cliente); 
+			continue; 
+		}
+		
+		// Guardamos en una variable el cod_op para eliminar el paquete // TODO: revisar si el buffer lo vamos a usar para algo en esta instancia, porque por ahora solo con el cop_op ya podriamos identificar que cliente/modulo se contecto
+        int tipo = hs->codigo_operacion;
+		eliminar_paquete(hs);
+
+		// Reservamos memoria para pasar ambos parámetros a los handlers
+        t_args* args = malloc(sizeof(t_args));
+        args->fd = fd_cliente;
+
+		int hilo_creado = 0;
+
+		switch (tipo) {
+			case HANDSHAKE_KERNEL_SCHEDULER:
+				log_info(logger, "Se conectó el kernel scheduler...");
+				pthread_create(&hilo, NULL, handler_kernel_scheduler, args);
+				hilo_creado = 1;
+				break;
+			case HANDSHAKE_CPU:
+				log_info(logger, "Se conectó el CPU...");
+				pthread_create(&hilo, NULL, handler_cpu, args);
+				hilo_creado = 1;
+				break;
+            case HANDSHAKE_SWAP:
+				log_info(logger, "Se conectó el swap...");
+				// pthread_create(&hilo, NULL, (void*) handler_swap, args);
+				// hilo_creado = 1;
+				break;
+			case HANDSHAKE_MEMORY_STICK:
+				log_info(logger, "Se conectó el memory stick...");
+				// pthread_create(&hilo, NULL, (void*) handler_memory_stick, args);
+				// hilo_creado = 1;
+				break;
+			default:
+				log_warning(logger,"Operacion desconocida. No quieras meter la pata");
+				close(fd_cliente);
+				break;
+		}
+
+		if(hilo_creado)
+			pthread_detach(hilo);
+	}
+
+	//TODO
+	// phthreadjoin(H1); // Hay que usar la otra
+
+    liberar_recursos(logger, config);
+    liberar_conexion(conexion_servidor);
+
     return 0;
 }

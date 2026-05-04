@@ -26,16 +26,16 @@ int main(int argc, char* argv[]) {
         log_error(logger, "No se pudo cargar el config: %s\n", argv[1]);
         return EXIT_FAILURE;
     }
-    get_string_from_config(logger, config, "IP", &ip);
-    get_string_from_config(logger, config, "PUERTO_MEMORY_STICK", &puerto_memory_stick);
-    get_string_from_config(logger, config, "PUERTO_KERNEL_MEMORY", &puerto_kernel_memory);
+    get_string_from_config(config, "IP", &ip);
+    get_string_from_config(config, "PUERTO_MEMORY_STICK", &puerto_memory_stick);
+    get_string_from_config(config, "PUERTO_KERNEL_MEMORY", &puerto_kernel_memory);
 	
     log_info(logger, "IP: %s", ip);
 	log_info(logger, "PUERTO_KERNEL_MEMORY: %s", puerto_kernel_memory);
 	log_info(logger, "PUERTO_MEMORY_STICK: %s", puerto_memory_stick);
    
     // Conexion para memory
-	int conexion_kernel_memory = crear_conexion(ip, puerto_kernel_memory);
+	int conexion_kernel_memory = crear_conexion(logger, ip, puerto_kernel_memory);
 
 	int conexion_memory_stick = iniciar_servidor(logger, puerto_memory_stick);
    
@@ -46,6 +46,5 @@ int main(int argc, char* argv[]) {
     
     liberar_recursos(logger, config, conexion_memory_stick, conexion_kernel_memory);
     
-    saludar("kernel_scheduler");
     return 0;
 }

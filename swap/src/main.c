@@ -25,15 +25,14 @@ int main(int argc, char* argv[]) {
         log_error(logger, "No se pudo cargar el config: %s\n", argv[1]);
         return EXIT_FAILURE;
     }
-    get_string_from_config(logger, config, "IP", &ip);
-    get_string_from_config(logger, config, "PUERTO_KERNEL_MEMORY", &puerto_kernel_memory);
+    get_string_from_config(config, "IP", &ip);
+    get_string_from_config(config, "PUERTO_KERNEL_MEMORY", &puerto_kernel_memory);
 
     // Conexion a kernel memory
-	int conexion = crear_conexion(ip, puerto_kernel_memory);
+	int conexion = crear_conexion(logger, ip, puerto_kernel_memory);
     log_info(logger, "> Swap Listo");
 
     liberar_recursos(logger, config, conexion);
     
-    saludar("swap");
     return 0;
 }
