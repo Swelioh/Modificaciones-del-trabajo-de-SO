@@ -15,17 +15,6 @@
 
 //  El buffer que guarda el tamaño y los datos crudos
 typedef struct {
-    uint32_t size;
-    void* stream;
-} t_buffer;
-
-//  El paquete final que viaja por la red
-typedef struct {
-    op_code codigo_operacion;
-    t_buffer* buffer;
-} t_paquete;
-
-typedef struct {
     uint32_t PC;  
     uint8_t AX, BX, CX, DX; 
     uint32_t EAX, EBX, ECX, EDX; 

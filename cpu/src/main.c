@@ -1,4 +1,4 @@
-#include "../utils.h"
+#include "../src/cpu_utils.h"
 
 void liberar_recursos(t_log* logger, t_config* config, int conexion_scheduler, int conexion_stick, int conexion_memory)
 {
@@ -44,32 +44,51 @@ int main(int argc, char* argv[]) {
 	int conexion_scheduler = crear_conexion(logger, ip, puerto_kernel_scheduler);
     log_info(logger, "> Modulo CPU Conectado a Scheduler");
 
+    // =========================================================
+    // 🤝 HANDSHAKE CON EL SCHEDULER
+    // =========================================================
+    uint32_t id_cpu = (uint32_t) atoi(argv[2]); // Extraemos el ID del parámetro
+    t_ingreso_cpu handshake_cpu;
+    handshake_cpu.identificador_cpu = id_cpu;
+
+    // Armamdo y enviado del paquete 
+    t_paquete* paquete_ingreso = armar_paquete_scheduler_cpu(HANDSHAKE_CPU, &handshake_cpu);
+    enviar_paquete(paquete_ingreso, conexion_scheduler);
+    eliminar_paquete(paquete_ingreso);
+
+    log_info(logger, "Handshake enviado a Kernel Scheduler (Soy CPU ID: %d)", id_cpu);
+
     // CONEXION CLIENTE CON MEMORY STICK
     int conexion_stick = crear_conexion(logger, ip, puerto_memory_stick);
     log_info(logger, "> Modulo CPU Conectado a Memory Stick");
+
+
 
     // CONEXION CLIENTE CON KERNEL MEMORY
 	int conexion_memory = crear_conexion(logger, ip, puerto_kernel_memory);
     log_info(logger, "> Modulo CPU Conectado a Kernel Memory");
 
+
+    // =========================================================
+    // 🤝 HANDSHAKE CON EL MEMORY
+    // =========================================================
+    t_paquete* paquete_memoria = armar_paquete_scheduler_cpu(HANDSHAKE_CPU, &handshake_cpu);
+    enviar_paquete(paquete_memoria, conexion_memory);
+    eliminar_paquete(paquete_memoria);
+    log_info(logger, "Handshake enviado a Kernel Memory (Soy CPU ID: %d)", id_cpu);
+
+
     //--------------------------------------------DESARROLLO CPU
-    int pid_actual = 1; // Mock
+    int pid_actual=1;
     bool procesando = true;
     t_registros registros = {0}; // Setea todos los campos en cero automáticamente
 
-    char* programa[] = {
-    "SET AX 10",
-    "SET BX 20",
-    "SUM AX BX",
-    "JNZ AX 4", // Ejemplo de salto
-    "EXIT"
-    };
 
 while (1) {
     log_info(logger, "CPU esperando proceso del Kernel...");
     
     // La CPU se bloquea acá hasta que el Kernel mande algo
-    int cod_op = recibir_operacion(conexion_scheduler);
+    int cod_op = recibir_codigo_de_operacion(conexion_scheduler);
     
     switch (cod_op) {
         case NUEVO_PROCESO:
