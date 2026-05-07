@@ -8,25 +8,18 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <commons/log.h>
+#include <variables_globales/variables_globales.h>
+#include <serializacion/scheduler_cpu/serializacionesScheduler_Cpu.h>
+#include <serializacion/cpu_kernel_memory/serializaciones_cpu_kernel_memory.h>
 
-// 1. Los códigos para que Kernel y CPU hablen el mismo idioma
-typedef enum {
-    NUEVO_PROCESO,       // El Kernel te manda un PID para ejecutar
-    DESALOJO_PROCESO,    // La CPU le devuelve el PID al Kernel
-    INTERRUPCION,        // El Kernel le dice a la CPU que frene
-    MENSAJE,              // Para mandar strings simples (como el Handshake)
-    PEDIR_CONTEXTO,      // CPU le dice a Memoria: "Dame los registros del PID X"
-    CONTEXTO_ACTUALIZADO, // Memoria le responde a CPU con los registros
-    PEDIR_INSTRUCCION  //Para el Fetch
-} op_code;
 
-// 2. El buffer que guarda el tamaño y los datos crudos
+//  El buffer que guarda el tamaño y los datos crudos
 typedef struct {
     uint32_t size;
     void* stream;
 } t_buffer;
 
-// 3. El paquete final que viaja por la red
+//  El paquete final que viaja por la red
 typedef struct {
     op_code codigo_operacion;
     t_buffer* buffer;
