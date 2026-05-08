@@ -58,4 +58,6 @@ typedef enum {
     PEDIR_INSTRUCCION  //Para el Fetch
 } codigo_operacion;
 
+
+
 #endif

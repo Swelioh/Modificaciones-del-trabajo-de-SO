@@ -13,11 +13,27 @@ t_paquete* armar_paquete_scheduler_cpu(codigo_operacion codigo, void* struct_con
 		case HANDSHAKE_CPU:
 			serializarIngresoCPU(buffer, *((t_ingreso_cpu*) struct_con_mensaje));
 			break;
+		case NUEVO_PROCESO:
+            serializar_nuevo_proceso(buffer, *((t_nuevo_proceso*) struct_con_mensaje));
+            break;
 		default:
 			printf("No se reconoce el codigo de operacion.");
 			break;
 	}
 	return paquete;
+}
+
+void desarmar_paquete_scheduler_cpu(codigo_operacion codigo, t_buffer* buffer, void* struct_con_mensaje)
+{
+    switch(codigo)
+    {
+        case NUEVO_PROCESO:
+            deserializar_nuevo_proceso(buffer, (t_nuevo_proceso*) struct_con_mensaje);
+            break;
+        default:
+            printf("No se reconoce el codigo de operacion al desarmar en Scheduler-CPU.\n");
+            break;
+    }
 }
 
 // Mensaje que envia CPU al SCHEDULER avisando que se dispone de una CPU nueva para el procesamiento de datos
@@ -28,4 +44,15 @@ void serializarIngresoCPU(t_buffer *buffer, t_ingreso_cpu struct_a_serializar)
 void deserializarIngresoCPU(t_buffer *buffer, t_ingreso_cpu* struct_donde_deserializo)
 {
 	struct_donde_deserializo->identificador_cpu = leer_uint32_del_buffer(buffer);
+}
+
+//lógicas de empaquetado:
+void serializar_nuevo_proceso(t_buffer *buffer, t_nuevo_proceso struct_a_serializar)
+{
+    agregar_uint32_al_buffer(buffer, struct_a_serializar.pid);
+}
+
+void deserializar_nuevo_proceso(t_buffer *buffer, t_nuevo_proceso* struct_donde_deserializo)
+{
+    struct_donde_deserializo->pid = leer_uint32_del_buffer(buffer);
 }

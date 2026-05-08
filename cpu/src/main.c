@@ -1,4 +1,5 @@
-#include "../src/cpu_utils.h"
+#include <cpu_utils/cpu_utils.h>
+#include <cpu_utils/inicializacion.h>
 
 void liberar_recursos(t_log* logger, t_config* config, int conexion_scheduler, int conexion_stick, int conexion_memory)
 {
@@ -12,42 +13,26 @@ void liberar_recursos(t_log* logger, t_config* config, int conexion_scheduler, i
 
 
 int main(int argc, char* argv[]) {
-    t_log* logger = log_create("modulo_cpu.log", "modulo_cpu", 1, LOG_LEVEL_TRACE);
 
-    char* ip;
-    char* puerto_kernel_scheduler;
-    char* puerto_memory_stick;
-    char* puerto_kernel_memory;
+    validarArgumentos(argc);
+    inicializarModulo(argv[1],argv[2]);
 
-    if (argc != 3) {
-        log_error(logger, "Uso: %s [Archivo Config] [Identificador]\n", argv[0]);
-        return EXIT_FAILURE;
-    }
 
-    // Archivos de Config
-    t_config* config = config_create(argv[1]);
-    if (config == NULL) {
-        log_error(logger, "No se pudo cargar el config: %s\n", argv[1]);
-        return EXIT_FAILURE;
-    }
-    get_string_from_config(config, "IP", &ip);
-    get_string_from_config(config, "PUERTO_KERNEL_SCHEDULER", &puerto_kernel_scheduler);
-    get_string_from_config(config, "PUERTO_MEMORY_STICK", &puerto_memory_stick);
-    get_string_from_config(config, "PUERTO_KERNEL_MEMORY", &puerto_kernel_memory);
-
-    log_info(logger, "IP: %s", ip);
-	log_info(logger, "PUERTO_KERNEL_SCHEDULER: %s", puerto_kernel_scheduler);
-	log_info(logger, "PUERTO_MEMORY_STICK: %s", puerto_memory_stick);
-	log_info(logger, "PUERTO_KERNEL_MEMORY: %s", puerto_kernel_memory);
+    log_debug(logger, "IP KERNEL SCHEDULER: %s", IP_KERNEL_SCHEDULER);
+    log_debug(logger, "IP MEMORY STICK: %s", IP_MEMORY_STICK);
+    log_debug(logger, "IP KERNEL MEMORY: %s", IP_KERNEL_MEMORY);
+	log_debug(logger, "PUERTO_KERNEL_SCHEDULER: %s", PUERTO_KERNEL_SCHEDULER);
+	log_debug(logger, "PUERTO_MEMORY_STICK: %s", PUERTO_MEMORY_STICK);
+	log_debug(logger, "PUERTO_KERNEL_MEMORY: %s", PUERTO_KERNEL_MEMORY);
 
     // CONEXION CLIENTE CON KERNEL SCHEDULER
-	int conexion_scheduler = crear_conexion(logger, ip, puerto_kernel_scheduler);
-    log_info(logger, "> Modulo CPU Conectado a Scheduler");
+	int conexion_scheduler = crear_conexion(logger, IP_KERNEL_SCHEDULER, PUERTO_KERNEL_SCHEDULER);
+    log_debug(logger, "> Modulo CPU Conectado a Scheduler");
 
     // =========================================================
     // 🤝 HANDSHAKE CON EL SCHEDULER
     // =========================================================
-    uint32_t id_cpu = (uint32_t) atoi(argv[2]); // Extraemos el ID del parámetro
+   // Extraemos el ID del parámetro
     t_ingreso_cpu handshake_cpu;
     handshake_cpu.identificador_cpu = id_cpu;
 
@@ -93,7 +78,7 @@ while (1) {
     switch (cod_op) {
         case NUEVO_PROCESO:
             //  nos mandaron un PID, lo leemos
-            pid_actual = recibir_pid(conexion_scheduler);
+            pid_actual = (int)recibir_pid_del_scheduler(conexion_scheduler);
             log_info(logger, "El Kernel me asignó el PID: %d", pid_actual);
             
             // el Contexto a la Memoria
@@ -101,7 +86,7 @@ while (1) {
 
             registros = recibir_contexto(conexion_memory);
             log_info(logger, "Contexto recibido. PC inicial: %d", registros.PC);
-            // TODO: Acá arranca while(procesando) { Fetch, Decode, Execute... }
+            
             procesando = true;
             while(procesando) {
                 
@@ -125,44 +110,35 @@ while (1) {
                     // SET (Registro, Valor)
                     int valor = atoi(parametro2); // Convertimos el string del número a un int real
                     
-                    // Mapeamos el string del registro a nuestro t_registros
-                    if (strcmp(parametro1, "AX") == 0) registros.AX = (uint8_t)valor;
-                    else if (strcmp(parametro1, "BX") == 0) registros.BX = (uint8_t)valor;
-                    else if (strcmp(parametro1, "CX") == 0) registros.CX = (uint8_t)valor;
-                    else if (strcmp(parametro1, "DX") == 0) registros.DX = (uint8_t)valor;
-                    else if (strcmp(parametro1, "EAX") == 0) registros.EAX = (uint32_t)valor;
-                    else if (strcmp(parametro1, "EBX") == 0) registros.EBX = (uint32_t)valor;
-                    else if (strcmp(parametro1, "ECX") == 0) registros.ECX = (uint32_t)valor;
-                    else if (strcmp(parametro1, "EDX") == 0) registros.EDX = (uint32_t)valor;
-
+                    
+                    escribir_registro(&registros, parametro1, valor);
                    
                     log_info(logger, "## PID: %d - Ejecutando: %s - [%s, %s]", pid_actual, operacion, parametro1, parametro2);
                     
                     registros.PC++; 
                 } 
-                else if (strcmp(operacion, "SUM") == 0) {
-                    // SUM (Destino, Origen) - Asumimos AX y BX para tu prueba
-                    if (strcmp(parametro1, "AX") == 0 && strcmp(parametro2, "BX") == 0) {
-                        registros.AX += registros.BX;
-                    }
+               else if (strcmp(operacion, "SUM") == 0) {
+                    // Lee el valor de ambos registros
+                    uint32_t valor_destino = leer_registro(&registros, parametro1);
+                    uint32_t valor_origen = leer_registro(&registros, parametro2);
+                    
+                    //  Escribe la suma en el primer registro
+                    escribir_registro(&registros, parametro1, valor_destino + valor_origen);
                     
                     log_info(logger, "## PID: %d - Ejecutando: %s - [%s, %s]", pid_actual, operacion, parametro1, parametro2);
                     registros.PC++;
                 }
                 else if (strcmp(operacion, "JNZ") == 0) {
-                    // JNZ (Registro, Salto)
+                    // JNZ evalúa el registro del parametro1, y salta a la instrucción del parametro2
+                    uint32_t valor_registro = leer_registro(&registros, parametro1);
                     uint32_t salto = (uint32_t)atoi(parametro2);
-                    uint32_t valor_registro = 0;
-
-                    if (strcmp(parametro1, "AX") == 0) valor_registro = registros.AX;
-                    else if (strcmp(parametro1, "EAX") == 0) valor_registro = registros.EAX;
 
                     log_info(logger, "## PID: %d - Ejecutando: %s - [%s, %s]", pid_actual, operacion, parametro1, parametro2);
 
                     if (valor_registro != 0) {
-                        registros.PC = salto; // Saltamos (no sumamos 1)
+                        registros.PC = salto;
                     } else {
-                        registros.PC++;       // Avanzamos normal
+                        registros.PC++;       
                     }
                 }
                 else if (strcmp(operacion, "EXIT") == 0) {
@@ -171,7 +147,7 @@ while (1) {
                 }
                 else {
                     log_error(logger, "PID: %d - Instruccion desconocida: %s", pid_actual, operacion);
-                    procesando = false; // Rompemos por seguridad
+                    procesando = false; // Rompe por seguridad
                 }
                 //LIBERO MEMORIA DE LA INSTRUCCION
                 free(instruccion_proxima);
