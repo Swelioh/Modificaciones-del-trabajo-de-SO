@@ -2,6 +2,8 @@
 #include <cpu_utils/inicializacion.h>
 #include <cpu_utils/variablesGlobales.h>
 #include <cpu_utils/instrucciones.h>
+#include <cpu_memory/cpu_memory.h>
+#include <cpu_scheduler/cpu_scheduler.h>
 
 void liberar_recursos(t_log* logger, t_config* config, int conexion_scheduler, int conexion_stick, int conexion_memory)
 {
