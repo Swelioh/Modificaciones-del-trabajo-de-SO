@@ -19,7 +19,11 @@ bool ejecutar_instruccion(char** instruccion, t_registros* registros, int pid, i
         instruccion_exit(pid, registros, conexion_scheduler, conexion_memory, logger);
         return false; // Frena el while(procesando) en el main
     }
-    // TODO: Agregar SLEEP, MUTEX_LOCK, etc. (Devuelven false)
+    else if (strcmp(op, "SLEEP") == 0) {
+    instruccion_sleep(instruccion, registros, pid, conexion_scheduler, conexion_memory, logger);
+    return false; 
+    }
+    // TODO: MUTEX_LOCK, etc. (Devuelven false)
     else {
         log_error(logger, "## PID: %d - Instrucción desconocida: %s", pid, op);
         return false;
@@ -92,4 +96,19 @@ void instruccion_jnz(char** instruccion, t_registros* registros, int pid, t_log*
         // Si es cero, la condición no se cumple y la CPU sigue normalmente
         registros->PC++;
     }
+}
+
+void instruccion_sleep(char** instruccion, t_registros* registros, int pid, int conexion_scheduler, int conexion_memory, t_log* logger) {
+    char* tiempo_str = instruccion[1];
+    uint32_t tiempo_sleep = (uint32_t)atoi(tiempo_str);
+    
+    log_info(logger, "## PID: %d - Ejecutando: SLEEP - %s", pid, tiempo_str);
+    
+    registros->PC++; //  Acá SI sumamos 1, para que al volver de I/O ejecute la próxima.
+    
+    enviar_contexto_a_memoria(conexion_memory, pid, registros);
+    
+    // Mandamos al scheduler el motivo SLEEP y el tiempo
+    //  armar un paquete que tenga (PID, MOTIVO_SLEEP, tiempo_sleep)
+    devolver_proceso_a_scheduler_con_parametro(conexion_scheduler, pid, MOTIVO_SLEEP, tiempo_sleep);
 }
