@@ -1,13 +1,14 @@
 #include <cpu_utils/cpu_utils.h>
 #include <cpu_utils/inicializacion.h>
+#include <cpu_utils/variablesGlobales.h>
+#include <cpu_utils/instrucciones.h>
 
 void liberar_recursos(t_log* logger, t_config* config, int conexion_scheduler, int conexion_stick, int conexion_memory)
 {
     liberar_conexion(conexion_scheduler);
     liberar_conexion(conexion_stick);
     liberar_conexion(conexion_memory);
-    log_destroy(logger);
-    config_destroy(config);
+    liberar_cpu();
 }
 
 
@@ -33,6 +34,7 @@ int main(int argc, char* argv[]) {
     // 🤝 HANDSHAKE CON EL SCHEDULER
     // =========================================================
    // Extraemos el ID del parámetro
+    uint32_t id_cpu = (uint32_t) atoi(argv[2]);
     t_ingreso_cpu handshake_cpu;
     handshake_cpu.identificador_cpu = id_cpu;
 
@@ -44,13 +46,13 @@ int main(int argc, char* argv[]) {
     log_info(logger, "Handshake enviado a Kernel Scheduler (Soy CPU ID: %d)", id_cpu);
 
     // CONEXION CLIENTE CON MEMORY STICK
-    int conexion_stick = crear_conexion(logger, ip, puerto_memory_stick);
+    int conexion_stick = crear_conexion(logger, IP_MEMORY_STICK, PUERTO_MEMORY_STICK);
     log_info(logger, "> Modulo CPU Conectado a Memory Stick");
 
 
 
     // CONEXION CLIENTE CON KERNEL MEMORY
-	int conexion_memory = crear_conexion(logger, ip, puerto_kernel_memory);
+	int conexion_memory = crear_conexion(logger, IP_KERNEL_MEMORY, PUERTO_KERNEL_MEMORY);
     log_info(logger, "> Modulo CPU Conectado a Kernel Memory");
 
 
@@ -89,72 +91,31 @@ while (1) {
             
             procesando = true;
             while(procesando) {
-                
-                //FETCH
-               char* instruccion_proxima = fetch_instruccion(conexion_memory, pid_actual, registros.PC);
-                
+                // 1. FETCH
+                char* instruccion_proxima = fetch_instruccion(conexion_memory, pid_actual, registros.PC);
                 log_info(logger, "## PID: %d - FETCH - Program Counter: %d", pid_actual, registros.PC);
                 
-                //TODO: EXECUTE (HECHO, HAY QUE VER SI ESTA BIEN)
-                // DECODE
-               
-                char operacion[20] = {0};
-                char parametro1[20] = {0};
-                char parametro2[20] = {0};
+                // 2. DECODE
+                char** instruccion_separada = string_split(instruccion_proxima, " ");
                 
-                //  palabras del string (ej: "SET" "AX" "10")
-                // ¡Que pasa con EXIT? DUDA DE IMPLEMENTACION??
-                sscanf(instruccion_proxima, "%s %s %s", operacion, parametro1, parametro2);
-                // EXECUTE
-                if (strcmp(operacion, "SET") == 0) {
-                    // SET (Registro, Valor)
-                    int valor = atoi(parametro2); // Convertimos el string del número a un int real
-                    
-                    
-                    escribir_registro(&registros, parametro1, valor);
-                   
-                    log_info(logger, "## PID: %d - Ejecutando: %s - [%s, %s]", pid_actual, operacion, parametro1, parametro2);
-                    
-                    registros.PC++; 
-                } 
-               else if (strcmp(operacion, "SUM") == 0) {
-                    // Lee el valor de ambos registros
-                    uint32_t valor_destino = leer_registro(&registros, parametro1);
-                    uint32_t valor_origen = leer_registro(&registros, parametro2);
-                    
-                    //  Escribe la suma en el primer registro
-                    escribir_registro(&registros, parametro1, valor_destino + valor_origen);
-                    
-                    log_info(logger, "## PID: %d - Ejecutando: %s - [%s, %s]", pid_actual, operacion, parametro1, parametro2);
-                    registros.PC++;
-                }
-                else if (strcmp(operacion, "JNZ") == 0) {
-                    // JNZ evalúa el registro del parametro1, y salta a la instrucción del parametro2
-                    uint32_t valor_registro = leer_registro(&registros, parametro1);
-                    uint32_t salto = (uint32_t)atoi(parametro2);
+                // 3. EXECUTE
+                // La función devuelve true si debe seguir procesando, o false si hubo una Syscall (EXIT)
+                procesando = ejecutar_instruccion(instruccion_separada, &registros, pid_actual, conexion_scheduler, conexion_memory, logger);
 
-                    log_info(logger, "## PID: %d - Ejecutando: %s - [%s, %s]", pid_actual, operacion, parametro1, parametro2);
-
-                    if (valor_registro != 0) {
-                        registros.PC = salto;
-                    } else {
-                        registros.PC++;       
-                    }
-                }
-                else if (strcmp(operacion, "EXIT") == 0) {
-                    log_info(logger, "## PID: %d - Ejecutando: %s", pid_actual, operacion);
-                    procesando = false; // Rompe el ciclo
-                }
-                else {
-                    log_error(logger, "PID: %d - Instruccion desconocida: %s", pid_actual, operacion);
-                    procesando = false; // Rompe por seguridad
-                }
-                //LIBERO MEMORIA DE LA INSTRUCCION
+                // LIMPIEZA
+                string_array_destroy(instruccion_separada);
                 free(instruccion_proxima);
 
-                
                 // 4. CHECK INTERRUPT
-
+                if (procesando) { 
+                    int senial;
+                    if (recv(conexion_scheduler, &senial, sizeof(int), MSG_DONTWAIT) > 0) {
+                        log_info(logger, "## Interrupción recibida");
+                        enviar_contexto_a_memoria(conexion_memory, pid_actual, &registros);
+                        devolver_proceso_a_scheduler(conexion_scheduler, pid_actual, MOTIVO_INTERRUPCION);
+                        procesando = false; 
+                    }
+                }
             }
 
             break;

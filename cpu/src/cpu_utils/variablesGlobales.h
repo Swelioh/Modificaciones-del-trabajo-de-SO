@@ -3,7 +3,7 @@
 
 #include <commons/log.h>
 #include <commons/config.h>
-
+#include <utils/utils.h>
 // **************************************************
 //              Variables globales generales
 // **************************************************
@@ -18,15 +18,6 @@ extern char *IP_KERNEL_SCHEDULER;
 extern char *IP_KERNEL_MEMORY; 
 extern char *IP_MEMORY_STICK; 
 extern uint32_t IDENTIFICADOR;
-
-
-
-
-
-
-
-
-
 
 
 
